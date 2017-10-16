@@ -32,12 +32,17 @@ class GetDataMongo(object):
     def get_tick_data(self):
         # client = pymongo.MongoClient(self.ip, port)
         collection = self.client.futures[self.db]  # different collections
-        data = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date}, self.column).sort('levelNo',1)
-        return data
+        tickdata = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date}, self.column).sort('levelNo', 1)
+        return tickdata
+
+    def get_bar_data(self):
+        collection = self.client.futures['history_bar']
+        bardata = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date}).sort('levelNo', 1)
+        return bardata
 
 
 class GetSupData(object):
-    def __init__(self,symbol, ip=localip):
+    def __init__(self, symbol, ip=localip):
         self.symbol = symbol
         self.code = instidtoprodid(symbol).lower()
         self.ip = ip
@@ -61,10 +66,10 @@ class GetSupData(object):
     def get_contract_size(self):
         return self.get_sup_data()['contract_size']
 
-    def get_margin_ratio(self, type = 'broker'):
-        if type == 'broker':
+    def get_margin_ratio(self, margin_type='broker'):
+        if margin_type == 'broker':
             return self.get_sup_data()['broker_margin']/100
-        elif type == 'exch':
+        elif margin_type == 'exch':
             return self.get_sup_data()['exch_margin']/100
         else:
             print('please enter the correct margin type')
@@ -86,7 +91,7 @@ class GetSupData(object):
 
 
 class GetDataCSV(object):
-    def __init__(self,filename,location=''):
+    def __init__(self, filename, location=''):
         self.filename = filename
         self.location = location
 
@@ -96,19 +101,19 @@ class GetDataCSV(object):
 
 
 class GetTradeDates(object):
-    def __init__(self,ip = localip):
+    def __init__(self, ip=localip):
         self.ip = ip
         self.db = pymongo.MongoClient(self.ip, port).futures['trade_date']
 
-    def is_trading_day(self,tradeday):
-        if list(self.db.find({'cur_trade_date':tradeday})):
+    def is_trading_day(self, tradeday):
+        if list(self.db.find({'cur_trade_date': tradeday})):
             return True
         else:
             return False
 
-    def get_next_trading_day(self,curday):
+    def get_next_trading_day(self, curday):
         while self.is_trading_day(curday):
-            return self.db.find_one({'cur_trade_date':curday})['next_trade_date']
+            return self.db.find_one({'cur_trade_date': curday})['next_trade_date']
         curday += 1
 
     def __get_date_range(self, start, end):
@@ -120,92 +125,24 @@ class GetTradeDates(object):
             datelist.append(int(datestart.strftime('%Y%m%d')))
         return datelist
 
-    def get_date_list(self,start,end):
+    def get_date_list(self, start, end):
         datelist = []
-        daterange = self.__get_date_range(start,end)
+        daterange = self.__get_date_range(start, end)
         # print(daterange)
-        data = self.db.find({'cur_trade_date':{"$in":daterange}})
+        data = self.db.find({'cur_trade_date': {"$in": daterange}})
         for row in data:
             # print(row)
             datelist.append(row['cur_trade_date'])
-        return sorted(datelist,reverse=False)
+        return sorted(datelist, reverse=False)
 
-
-s = ['rb1801','ag1801']
 
 def get_tick(date, symbol):
     tick = GetDataMongo(symbol=symbol, date=date).get_tick_data()  # 数据库取某天的tick
     return tick
 
-def get_ticks_dict(date,symbols):
+
+def get_ticks_dict(date, symbols):
     ticks = {}
     for symbol in symbols:
-        ticks[symbol] = get_tick(date,symbol)
+        ticks[symbol] = get_tick(date, symbol)
     return ticks
-
-# # for row in get_tick(20170511,'rb1801'):
-# #     print(row)
-# #     break
-# #
-#
-# a = get_ticks_dict(20170511, s)
-# time1 = datetime.datetime.now()
-# # tick = {}
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-# # for symbol in s:
-# #     tick[symbol] = a[symbol].next()
-#
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-# a['ag1801'].next()
-#
-# time2 = datetime.datetime.now()
-# # print(tick)
-#
-# print(time2-time1)
-#
-# # print(a)

@@ -1,13 +1,18 @@
+# encoding: utf-8
 
-import pymongo
+
+"""
+@version: python3.6
+@author: ‘sj‘
+@contact: songjie1217@hotmail.com
+@file: dataconfig.py
+@time: 9/28/17 6:33 PM
+"""
 
 
 remoteip = '101.88.232.189 '
 localip = '192.168.1.10'
-
 port = 27017
-
-
 
 columns = ['InstrumentID',
            'UpdateTime',
@@ -49,8 +54,6 @@ miniclms = ['InstrumentID',
             'TradingDay',
             'UpdateTime',
             'UpdateMillisec',
-            'BidPrice1',
-            'AskPrice1',
             'LastPrice',
             'Volume']
 

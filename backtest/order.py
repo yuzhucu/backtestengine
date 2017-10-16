@@ -27,6 +27,8 @@ class Order(object):
 class Transaction(object):
     def __init__(self):
         self.symbol = ''
+        self.date = ''
+        self.time = ''
         self.direction = ''
         self.offset = ''
         self.price = ''
@@ -35,5 +37,12 @@ class Transaction(object):
         self.pnl = 0
 
 
-
+class DailySummary(object):
+    def __init__(self):
+        self.date = ''
+        self.equity = 0
+        self.cash = 0
+        self.positions = []
+        self.upnl = 0
+        self.pnl = 0
 

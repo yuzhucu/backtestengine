@@ -12,7 +12,9 @@ from backtest.context import *
 #
 # print(list(data))
 
-# data = pymongo.MongoClient(localip,port).futures['sf_price'].find({'TradingDay':20170511},['TradingDay','InstrumentID'])
+data = pymongo.MongoClient(remoteip, port).futures['rb_price'].find_one()
+# print(type(data['TradingDay']))
+print(data)
 #
 #
 # print(pd.DataFrame(list(data)))
@@ -54,5 +56,5 @@ from backtest.context import *
 # a().initialize()
 
 
-a = GetSupData(symbol='rb1801')
-print(a.get_sup_data())
+# a = GetSupData(symbol='rb1801')
+# print(a.get_sup_data())

@@ -4,12 +4,15 @@ import math
 import matplotlib.pyplot as plt
 import pylab as pl
 import xlwt
+import datetime
 
 class Stats(object):
     def __init__(self):
+        self.backtestid = ''
         self.nv = np.array([])
-        self.date = []
+        self.dates = []
         self.transactions = []
+        self.dailysummary = []
 
     def maxdd(self):
         max_draw_down = 0
@@ -129,7 +132,7 @@ class Stats(object):
         return profit
 
     def nvplot(self):
-        pl.plot(self.date,self.nv)
+        pl.plot(self.dates,self.nv)
         pl.show()
 
     def output(self, ret_type='log', voli_freq='annual', sharpe_freq='annual', output_type='excel'):
@@ -138,6 +141,7 @@ class Stats(object):
             overview = outputwb.add_sheet('overview')
             transdetail = outputwb.add_sheet('transactions')
             dailysummary = outputwb.add_sheet('daily_summary')
+
             overview.write(0, 0, 'true_return')
             overview.write(0, 1, self.returns(ret_type=ret_type, freq='def'))
             overview.write(1, 0, 'annual_return')
@@ -158,8 +162,47 @@ class Stats(object):
             overview.write(0, 4, float(self.nv[0]))
             overview.write(1, 3, 'final_cash')
             overview.write(1, 4, float(self.nv[-1]))
-            
-            outputwb.save('save.xls')
+            # overview.write(0, 6, self.nvplot())
+
+            transdetail.write(0, 0, 'date')
+            transdetail.write(0, 1, 'time')
+            transdetail.write(0, 2, 'symbol')
+            transdetail.write(0, 3, 'direction')
+            transdetail.write(0, 4, 'offset')
+            transdetail.write(0, 5, 'price')
+            transdetail.write(0, 6, 'volume')
+            transdetail.write(0, 7, 'commission')
+            transdetail.write(0, 8, 'realized gain/loss')
+
+            for i in range(0, len(self.transactions)):
+                trans = self.transactions[i]
+                transdetail.write(i+1, 0, trans.date)
+                transdetail.write(i+1, 1, trans.time)
+                transdetail.write(i+1, 2, trans.symbol)
+                transdetail.write(i+1, 3, trans.direction)
+                transdetail.write(i+1, 4, trans.offset)
+                transdetail.write(i+1, 5, trans.price)
+                transdetail.write(i+1, 6, trans.volume)
+                transdetail.write(i+1, 7, trans.commission)
+                transdetail.write(i+1, 8, trans.pnl)
+
+            dailysummary.write(0, 0, 'date')
+            dailysummary.write(0, 1, 'total_equity')
+            dailysummary.write(0, 2, 'cash_available')
+            dailysummary.write(0, 3, 'unrealized gain/loss')
+            dailysummary.write(0, 4, 'realized gain/loss')
+            dailysummary.write(0, 5, 'positions_held')
+
+            for j in range(0, len(self.dates)):
+                daily = self.dailysummary[j]
+                dailysummary.write(j+1, 0, daily.date)
+                dailysummary.write(j+1, 1, daily.equity)
+                dailysummary.write(j+1, 2, daily.cash)
+                dailysummary.write(j+1, 3, daily.upnl)
+                dailysummary.write(j+1, 4, daily.pnl)
+                dailysummary.write(j+1, 5, daily.positions)
+
+            outputwb.save('backtest-'+self.dates[0]+'-'+self.dates[-1]+'-'+self.backtestid+'.xls')
 
     def __ret(self):
         ret = self.nv[-1]/self.nv[0] - 1
@@ -196,11 +239,11 @@ class Stats(object):
 
 
 
-
-out = Stats()
-ls = np.array([1,2,3,4,5,2,3,5,1,6,2,3,5,6])
-x = [1,2,3,4,5,2,3,5,1,6,2,3,5,6]
-out.nv = ls
-out.date = x
-out.output()
+if __name__ =='main':
+    out = Stats()
+    ls = np.array([1,2,3,4,5,2,3,5,1,6,2,3,5,6])
+    x = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+    out.nv = ls
+    out.dates = x
+    out.output()
 

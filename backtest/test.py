@@ -81,3 +81,5 @@ __author__ = 'sjsj'
 # print(positions[s].marginvalue)
 
 
+for i in range(1,2):
+    print(i)

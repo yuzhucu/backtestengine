@@ -29,33 +29,20 @@ class Context(object):
         self.feed_frequency = ''
         self.sup_data=self.init_cash
 
-
 class RunInfo(object):
     def __init__(self):
         self.name = ''
-        self.run_id = ''# 标识策略每次运行的唯一id
-        self.run_type = '' # RUN_TYPE.BACKTEST表示当前策略在进行回测，RUN_TYPE.PAPER_TRADING表示当前策略在进行实盘模拟
-        self.start_date = ''# 策略的开始日期
-        self.end_date = '' # datetime.date    策略的结束日期
-        self.frequency = ''#策略频率，'1d' '1m' '1t
+        self.run_id = ''  # 标识策略每次运行的唯一id
+        self.run_type = ''  # RUN_TYPE.BACKTEST表示当前策略在进行回测，RUN_TYPE.PAPER_TRADING表示当前策略在进行实盘模拟
+        self.start_date = ''  # 策略的开始日期
+        self.end_date = ''  # datetime.date    策略的结束日期
+        self.frequency = ''  #策略频率，'1d' '1m' '1t
         self.starting_cash = 0 # 期货账户初始资金
-        self.slippage = 0 # 滑点水平
-        self.margin_multiplier = 0 # 保证金倍率
-        self.commission_multiplier = 0 # 佣金倍率
-        self.benchmark = '' # 基准合约代码
-        self.matching_typ = '' # 撮合方式，MATCHING_TYPE.NEXT_BAR_OPEN代表以下一bar开盘价撮合，MATCHING_TYPE.CURRENT_BAR_CLOSE代表以当前bar收盘价撮合
-
-class Order(object):
-    def __init__(self):
-        self.slippage_flag = False
-        self.slippage_tick = 0
-        self.slippage_count = 0
-        self.cancel_flag = False
-        self.order_status = 0 # 0 未成交 1 成交 -1 取消
-        self.direction = ''
-        self.offset = ''
-        self.vol = 0
-        self.price = 0
+        self.slippage = 0  # 滑点水平
+        self.margin_multiplier = 0  # 保证金倍率
+        self.commission_multiplier = 0  # 佣金倍率
+        self.benchmark = ''  # 基准合约代码
+        self.matching_typ = ''  # 撮合方式，MATCHING_TYPE.NEXT_BAR_OPEN代表以下一bar开盘价撮合，MATCHING_TYPE.CURRENT_BAR_CLOSE代表以当前bar收盘价撮合
 
 class Account(object):
     def __init__(self):
@@ -117,6 +104,41 @@ class Position(object):
         self.sell_quantity = 0 # 空头持仓
         self.sell_avg_open_price = 0 # 空头开仓均价
         self.sell_avg_holding_price = 0 # 空头持仓均价
+
+class Order(object):
+    def __init__(self):
+        self.symbol = ''
+        self.direction = ''
+        self.offset = ''
+        self.vol = 0
+        self.limit_price = 0
+        self.stop_price = 0
+        self.stop_type = ''
+        self.status = 0
+        self.slippage = 0
+
+
+class Transaction(object):
+    def __init__(self):
+        self.symbol = ''
+        self.date = ''
+        self.time = ''
+        self.direction = ''
+        self.offset = ''
+        self.price = ''
+        self.vol = 0
+        self.commission = 0
+        self.pnl = 0
+
+
+class DailySummary(object):
+    def __init__(self):
+        self.date = ''
+        self.equity = 0
+        self.cash = 0
+        self.positions = []
+        self.upnl = 0
+        self.pnl = 0
 
 class Instrument(object):
     def __init__(self):

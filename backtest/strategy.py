@@ -97,7 +97,7 @@ class Strategy(object):
         self.initialize()
         date_start_int = datestrtoint(self.context.run_info.start_date)
         date_end_int = datestrtoint(self.context.run_info.end_date)
-        datelist = GetTradeDates().get_date_list(date_start_int,date_end_int)
+        datelist = GetTradeDates().get_date_list(date_start_int, date_end_int)
         # print(datelist)
         trade_days = len(datelist)
         print('交易日共 %d 天' % trade_days)
@@ -240,7 +240,7 @@ class Strategy(object):
         #     # 成交
         #     print('orderorder')
         self.portfolio.modify_position(symbol=order['symbol'], direction=order['direction'], offset=order['offset'],
-                                       vol=order['vol'],price=order['limit_price'],marginratio=0.15)
+                                       vol=order['vol'], price=order['limit_price'], marginratio=0.15)
         # else:
         #     # 撤单
         #     pass
