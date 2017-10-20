@@ -4,6 +4,7 @@ from utils.objects import *
 from trade.tradeType import *
 
 #计算unit N
+#计算unit N
 class ATR(object):
     def __init__(self, account, cycle=20, dpp=10, coe=0.2):
         self.account = account
@@ -59,12 +60,12 @@ class BreakLimit(object):
             del self.lows[0]
             self._update(bar)
 
-            # print('BreakLimit=>max - min : %d - %d' % (max, min))
+            print('时间:%s BreakLimit=>max - min : %d - %d' % (dt.now(), max, min))
 
             if bar.close > max:
-                return BlR(direction='buy',price=max)
+                return BlR(direction=BUY,price=max)
             elif bar.close < min:
-                return BlR(direction='sell',price=min)
+                return BlR(direction=SELL,price=min)
             else:
                 return None
 
@@ -95,7 +96,7 @@ class StopLimit(object):
             del self.lows[0]
             self._update(bar)
 
-            # print('StopLimit=>max - min : %d - %d' % (max, min))
+            print('时间:%s StopLimit=>max - min : %d - %d' % (dt.now(), max, min))
 
             if bar.close > max :
                 # print('空单止盈')
@@ -111,12 +112,26 @@ class StopLimit(object):
         self.lows.append(bar.low)
 
 
+# atr 计算结果
+class AtrR(object):
+    def __init__(self, unit, n):
+        self.unit = unit
+        self.n = n
 
+    def __str__(self):
+        return 'unit: %d, n: %.2f' %(self.unit, self.n)
+
+# 均线突破结果
+class BlR(object):
+    def __init__(self, direction, price):
+        self.direction = direction
+        self.price = price
+
+    def __str__(self):
+        return 'direction: %s, price: %.2f' %(self.direction, self.price)
 
 
 if __name__ == '__main__':
-    a = ATR(1000000)
-    for i in range(0,40):
-        b = Bar(3000, 3100, 3200, 3050)
-        res = a.compute(b)
-        print('atr %s' % res)
+    print(ATR(1000000, cycle=20, dpp=50, coe=0.3))
+    print(BreakLimit(cycle=20))
+    print(StopLimit(cycle=10))

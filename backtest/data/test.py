@@ -6,15 +6,15 @@ from backtest.data.dataconfig import *
 from backtest.data.iterator import *
 import datetime
 from backtest.tools.tools import *
-from backtest.context import *
+from backtest.core.context import *
 
 # data = GetDataMongo('TA801',20170512,ip=localip).get_tick_data()
 #
 # print(list(data))
 
-data = pymongo.MongoClient(remoteip, port).futures['rb_price'].find_one()
-# print(type(data['TradingDay']))
-print(data)
+# data = pymongo.MongoClient(remoteip, port).futures['rb_price'].find_one()
+# # print(type(data['TradingDay']))
+# print(data)
 #
 #
 # print(pd.DataFrame(list(data)))
@@ -55,6 +55,25 @@ print(data)
 #
 # a().initialize()
 
+#
+# a = InstmtInfoMongo(symbol='j1801')
+# print(a.get_instmt_info())
 
-# a = GetSupData(symbol='rb1801')
-# print(a.get_sup_data())
+# datels = GetTradeDates(ip=remoteip).get_date_list(start=20170510,end=20170611)
+# print(datels)
+
+# time1 = datetime.datetime.now()
+# data = GetDataMongo(date=20170727, symbol='j1801').get_bar_data(freq='1m')
+# for row in data:
+#     print(row)
+#
+# print(data.next())
+# print(data.next())
+# time2 = datetime.datetime.now()
+# #
+# print(time2-time1)
+
+
+
+# data = TradeDataMongo(symbol='rb1801',date=20170511,column=miniclms,ip=remoteip).get_bar_obj(freq='60m')
+# print(data)

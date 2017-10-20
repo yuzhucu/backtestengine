@@ -11,16 +11,18 @@ description:
 
 __author__ = 'sjsj'
 
-import pymongo
-import pandas as pd
+
 from backtest.data.dataconfig import *
+from backtest.data.datatype import *
 from backtest.data.iterator import *
 from backtest.tools.tools import *
 
+import pymongo
+import pandas as pd
 
-class GetDataMongo(object):
+class TradeDataMongo(object):
 
-    def __init__(self, symbol, date, column=miniclms, ip=localip):
+    def __init__(self, symbol, date, column=miniclms, ip=remoteip):
         self.symbol = symbol
         self.date = date
         self.column = column
@@ -35,59 +37,59 @@ class GetDataMongo(object):
         tickdata = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date}, self.column).sort('levelNo', 1)
         return tickdata
 
-    def get_bar_data(self):
+    def get_bar_data(self, freq = '1m'):
         collection = self.client.futures['history_bar']
-        bardata = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date}).sort('levelNo', 1)
+        bardata = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date, 'type': freq}).sort('levelNo', 1)
         return bardata
 
 
-class GetSupData(object):
-    def __init__(self, symbol, ip=localip):
+class InstmtInfoMongo(object):
+    def __init__(self, symbol, ip=remoteip):
         self.symbol = symbol
         self.code = instidtoprodid(symbol).lower()
         self.ip = ip
         self.client = pymongo.MongoClient(self.ip, port)
         self.dbsup = 'future_info'
 
-    def get_sup_data(self):   ###取手续费，乘数等相关信息
+    def get_instmt_info(self):   ###取手续费，乘数等相关信息
         collection = self.client.futures[self.dbsup]
         feedata = collection.find({'instrument_code': self.code})
         supdata = list(feedata)[0]
         if supdata['opening_fee_by_num'] == 0.0:
-            supdata['commision_type'] = 'byvalue'
+            supdata['commision_type'] = 'value'
         else:
-            supdata['commision_type'] = 'byvol'
+            supdata['commision_type'] = 'vol'
 
         return supdata
 
     def get_tick_size(self):
-        return self.get_sup_data()['tick_size']
+        return self.get_instmt_info()['tick_size']
 
     def get_contract_size(self):
-        return self.get_sup_data()['contract_size']
+        return self.get_instmt_info()['contract_size']
 
     def get_margin_ratio(self, margin_type='broker'):
         if margin_type == 'broker':
-            return self.get_sup_data()['broker_margin']/100
+            return self.get_instmt_info()['broker_margin']/100
         elif margin_type == 'exch':
-            return self.get_sup_data()['exch_margin']/100
+            return self.get_instmt_info()['exch_margin']/100
         else:
             print('please enter the correct margin type')
             raise ValueError
 
     def get_commission_type(self):
-        if self.get_sup_data()['opening_fee_by_num'] == 0.0:
+        if self.get_instmt_info()['opening_fee_by_num'] == 0.0:
             return 'value'
         else:
             return 'vol'
 
     def get_commission(self, offset):
         if offset == 'open':
-            return max(self.get_sup_data()['opening_fee_by_num'], self.get_sup_data()['opening_fee_by_value'])
+            return max(self.get_instmt_info()['opening_fee_by_num'], self.get_instmt_info()['opening_fee_by_value'])
         elif offset == 'closeT':
-            return max(self.get_sup_data()['closing_today_fee_by_num'], self.get_sup_data()['closing_today_fee_by_value'])
+            return max(self.get_instmt_info()['closing_today_fee_by_num'], self.get_instmt_info()['closing_today_fee_by_value'])
         elif offset == 'closeY':
-            return max(self.get_sup_data()['closing_fee_by_num'], self.get_sup_data()['closing_fee_by_value'])
+            return max(self.get_instmt_info()['closing_fee_by_num'], self.get_instmt_info()['closing_fee_by_value'])
 
 
 class GetDataCSV(object):
@@ -101,7 +103,7 @@ class GetDataCSV(object):
 
 
 class GetTradeDates(object):
-    def __init__(self, ip=localip):
+    def __init__(self, ip=remoteip):
         self.ip = ip
         self.db = pymongo.MongoClient(self.ip, port).futures['trade_date']
 
@@ -136,13 +138,3 @@ class GetTradeDates(object):
         return sorted(datelist, reverse=False)
 
 
-def get_tick(date, symbol):
-    tick = GetDataMongo(symbol=symbol, date=date).get_tick_data()  # 数据库取某天的tick
-    return tick
-
-
-def get_ticks_dict(date, symbols):
-    ticks = {}
-    for symbol in symbols:
-        ticks[symbol] = get_tick(date, symbol)
-    return ticks

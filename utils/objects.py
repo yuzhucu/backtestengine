@@ -141,35 +141,6 @@ class Instrument(object):
 
 
 
-class Bar(object):
-    def __init__(self,op,cl,high,low):
-        self.open = op
-        self.close = cl
-        self.high = high
-        self.low = low
-
-
-    def __str__(self):
-        return 'open: %.2f, close: %.2f, high: %.2f, low: %.2f' %(self.open, self.close, self.high, self.low)
-
-
-# atr 计算结果
-class AtrR(object):
-    def __init__(self, unit, n):
-        self.unit = unit
-        self.n = n
-
-    def __str__(self):
-        return 'unit: %d, n: %.2f' %(self.unit, self.n)
-# 均线突破结果
-class BlR(object):
-    def __init__(self, direction, price):
-        self.direction = direction
-        self.price = price
-
-    def __str__(self):
-        return 'direction: %d, price: %.2f' %(self.direction, self.price)
-
 if __name__ == '__main__':
     pass
 

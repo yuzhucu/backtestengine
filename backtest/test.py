@@ -81,5 +81,13 @@ __author__ = 'sjsj'
 # print(positions[s].marginvalue)
 
 
-for i in range(1,2):
-    print(i)
+class A (object):
+    def __init__(self):
+        self.a = 0
+        self.b = self.a
+        self.c = self.b+self.a
+
+
+a = A()
+a.a=0
+print(a.b)
