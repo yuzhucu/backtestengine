@@ -42,6 +42,17 @@ class TradeDataMongo(object):
         bardata = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date, 'type': freq}).sort('levelNo', 1)
         return bardata
 
+    def __get_pre_settlement_price(self):
+        collection = self.client.futures[self.db]  # different collections
+        price = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date}, ['PreSettlementPrice'])
+        return list(price)[1]['PreSettlementPrice']
+
+    def get_settlement_price(self):
+        next_day = GetTradeDates(ip=self.ip).get_next_trading_day(self.date)
+        collection = self.client.futures[self.db]  # different collections
+        price = collection.find({"InstrumentID": self.symbol, "TradingDay": next_day}, ['PreSettlementPrice'])
+        return list(price)[1]['PreSettlementPrice']
+
 
 class InstmtInfoMongo(object):
     def __init__(self, symbol, ip=remoteip):
@@ -56,9 +67,9 @@ class InstmtInfoMongo(object):
         feedata = collection.find({'instrument_code': self.code})
         supdata = list(feedata)[0]
         if supdata['opening_fee_by_num'] == 0.0:
-            supdata['commision_type'] = 'value'
+            supdata['commission_type'] = 'value'
         else:
-            supdata['commision_type'] = 'vol'
+            supdata['commission_type'] = 'vol'
 
         return supdata
 
@@ -98,9 +109,9 @@ class GetDataCSV(object):
         self.location = location
 
     def get_tick(self):
-        df = pd.read_csv(self.filename)
-        return PandasDFTickEventIterator(df)
-
+        # df = pd.read_csv(self.filename)
+        # return PandasDFTickEventIterator(df)
+        pass
 
 class GetTradeDates(object):
     def __init__(self, ip=remoteip):
@@ -138,3 +149,10 @@ class GetTradeDates(object):
         return sorted(datelist, reverse=False)
 
 
+# def get_settlement_price(symbol,date,ip=remoteip):
+    # data = pymongo.MongoClient(ip=ip, port=27017).collection.find({"InstrumentID": symbol, "TradingDay": date}, ['SettlementPrice'])
+    # return list(data[-1])
+
+
+# a = TradeDataMongo('j1801',20170724).get_settlement_price()
+# print(a)

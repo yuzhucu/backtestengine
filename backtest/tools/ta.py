@@ -1,12 +1,11 @@
 __author__ = 'Jimmy'
 import numpy as np
-from utils.objects import *
-from trade.tradeType import *
+from backtest.handlers.order_type import *
 
 #计算unit N
 #计算unit N
 class ATR(object):
-    def __init__(self, account, cycle=20, dpp=10, coe=0.2):
+    def __init__(self, account, cycle=20, dpp=50, coe=0.2):
         self.account = account
         self.bar = None
         self.cycle = cycle
@@ -15,32 +14,34 @@ class ATR(object):
         self.count = 0
         self.coe = coe
 
-
     def compute(self, bar):
         if self.count == 0:
             self.bar = bar
             self.count += 1
-            return AtrR(0,0)
+            return AtrR(0, 0)
         else:
-            arr = np.array([bar.high - bar.low,bar.high - self.bar.close, self.bar.close - bar.low])
+            arr = np.array([bar.high - bar.low, bar.high - self.bar.close, self.bar.close - bar.low])
             tr = arr.max()
+            # print(tr)
 
             if self.count < self.cycle + 1:
                 self.n = (self.n * self.count + tr) / (self.count + 1)
             else:
-                self.n = (self.n * (self.cycle -1) + tr) / self.cycle
+                self.n = (self.n * (self.cycle - 1) + tr) / self.cycle
 
             dv = self.n * self.dpp
-            unit = int((0.01 * self.coe *self.account)/dv)
+            # print(dv)
+            unit = int((0.01 * self.coe * self.account)/dv)
+            # print(unit)
             self.bar = bar
             self.count += 1
-            out = AtrR(unit,self.n)
+            out = AtrR(unit, self.n)
 
             return out
 
 # 计算n日突破信号
 class BreakLimit(object):
-    def __init__(self, cycle = 20):
+    def __init__(self, cycle=20):
         self.cycle = cycle
         self.highs = []
         self.lows = []
@@ -60,7 +61,7 @@ class BreakLimit(object):
             del self.lows[0]
             self._update(bar)
 
-            print('时间:%s BreakLimit=>max - min : %d - %d' % (dt.now(), max, min))
+            # print('时间:%s BreakLimit=>max - min : %d - %d' % (dt.now(), max, min))
 
             if bar.close > max:
                 return BlR(direction=BUY,price=max)
@@ -96,7 +97,7 @@ class StopLimit(object):
             del self.lows[0]
             self._update(bar)
 
-            print('时间:%s StopLimit=>max - min : %d - %d' % (dt.now(), max, min))
+            # print('时间:%s StopLimit=>max - min : %d - %d' % (dt.now(), max, min))
 
             if bar.close > max :
                 # print('空单止盈')
@@ -129,6 +130,44 @@ class BlR(object):
 
     def __str__(self):
         return 'direction: %s, price: %.2f' %(self.direction, self.price)
+
+
+class Boll(object):
+    def __init__(self, cycle = 26, k=2):
+        self._cycle = cycle
+        self._k = k
+        self._close_prices=[]
+
+
+    def compute(self, bar):
+        bar_length = len(self._close_prices)
+        if bar_length < self._cycle - 1:
+            self._close_prices.append(bar.close)
+            return None
+        else:
+            # 计算n-1个bar的close均值 即中轨
+            temp1 = np.array(self._close_prices)
+            mb = temp1.mean()
+
+            self._close_prices.append(bar.close)
+            temp2 = np.array(self._close_prices)
+            # n个bar的标准差
+            md = temp2.std()
+            up = mb + self._k * md  # 上轨 = 中轨 + k * n个bar标准差
+            dn = mb - self._k * md  # 下轨 = 中轨 - k * n个bar标准差
+            bollR = BollR(up,mb,dn)
+            del self._close_prices[0]
+            return bollR
+
+class BollR(object):
+    def __init__(self, up, mb, dn):
+        self.up = up
+        self.mb = mb
+        self.dn = dn
+
+
+    def __str__(self):
+        return 'Boll: up %.2f, mb: %.2f, dn: %.2f' %(self.up, self.mb, self.dn)
 
 
 if __name__ == '__main__':

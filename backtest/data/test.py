@@ -6,7 +6,7 @@ from backtest.data.dataconfig import *
 from backtest.data.iterator import *
 import datetime
 from backtest.tools.tools import *
-from backtest.core.context import *
+# from backtest.core.context import *
 
 # data = GetDataMongo('TA801',20170512,ip=localip).get_tick_data()
 #
@@ -75,5 +75,27 @@ from backtest.core.context import *
 
 
 
-# data = TradeDataMongo(symbol='rb1801',date=20170511,column=miniclms,ip=remoteip).get_bar_obj(freq='60m')
+# data = TradeDataMongo(symbol='rb1801',date=20170511,column=columns,ip=remoteip).get_settlement_price()
 # print(data)
+
+
+# a = np.array([1,2,3])
+# np.insert(a,1,1)
+# print(a)
+
+# a = [1,2,3]
+#
+# b = np.array(a)
+#
+# print(b)
+
+a = GetTradeDates().get_date_list('20170601','20170630')
+
+b = iter(a)
+
+print(b.__next__())
+print(b.__next__())
+print(b.__next__())
+print(b.__next__())
+print(b.__next__())
+print(b.__next__())

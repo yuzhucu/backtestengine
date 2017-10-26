@@ -38,14 +38,27 @@ class Transaction(object):
         self.pnl = 0
 
 class TransactionRecord(object):
-    def __init__(self, symbol, direction, offset, vol, deal_price, commission, transtime, avg_cost=0):
+    def __init__(self, symbol, direction, offset, vol, deal_price, commission, transtime, date, pnl):
         self.symbol = symbol
+        self.date = date
+        self.time = transtime
         self.direction = direction
         self.offset = offset
+        self.price = deal_price
         self.vol = vol
-        self.deal_price = deal_price
         self.commission = commission
-        self.transtime = transtime
-        self.pnl = 0
+        self.pnl = pnl
 
+class DailySummary(object):
+    def __init__(self):
+        self.date = ''
+        self.balance = 0
+        self.equity = 0
+        self.cash = 0
+        self.marginreq = 0
+        self.daily_comm = 0
+        self.positions = []
+        self.upnl = 0
+        self.pnl = 0
+        self.riskratio = 0
 

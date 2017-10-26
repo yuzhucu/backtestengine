@@ -136,7 +136,7 @@ class Stats(object):
         pl.plot(self.dates,self.nv)
         pl.show()
 
-    def output(self, ret_type='log', voli_freq='annual', sharpe_freq='annual', output_type='excel'):
+    def output(self, ret_type='simple', voli_freq='annual', sharpe_freq='annual', output_type='excel'):
         if output_type == 'excel':
             outputwb = xlwt.Workbook()
             overview = outputwb.add_sheet('overview')
@@ -183,7 +183,7 @@ class Stats(object):
                 transdetail.write(i+1, 3, trans.direction)
                 transdetail.write(i+1, 4, trans.offset)
                 transdetail.write(i+1, 5, trans.price)
-                transdetail.write(i+1, 6, trans.volume)
+                transdetail.write(i+1, 6, trans.vol)
                 transdetail.write(i+1, 7, trans.commission)
                 transdetail.write(i+1, 8, trans.pnl)
 
@@ -192,7 +192,10 @@ class Stats(object):
             dailysummary.write(0, 2, 'cash_available')
             dailysummary.write(0, 3, 'unrealized gain/loss')
             dailysummary.write(0, 4, 'realized gain/loss')
-            dailysummary.write(0, 5, 'positions_held')
+            dailysummary.write(0, 5, 'margin_req')
+            dailysummary.write(0, 6, 'daily_comm')
+            dailysummary.write(0, 7, 'risk_ratio')
+
 
             for j in range(0, len(self.dates)):
                 daily = self.dailysummary[j]
@@ -201,9 +204,12 @@ class Stats(object):
                 dailysummary.write(j+1, 2, daily.cash)
                 dailysummary.write(j+1, 3, daily.upnl)
                 dailysummary.write(j+1, 4, daily.pnl)
-                dailysummary.write(j+1, 5, daily.positions)
+                dailysummary.write(j+1, 5, daily.marginreq)
+                dailysummary.write(j + 1, 6, daily.daily_comm)
+                dailysummary.write(j + 1, 7, daily.riskratio)
 
-            outputwb.save('backtest-'+self.dates[0]+'-'+self.dates[-1]+'-'+self.backtestid+'.xls')
+
+            outputwb.save('backtest-'+str(self.dates[0])+'-'+str(self.dates[-1])+'-'+self.backtestid+'.xls')
 
     def __ret(self):
         ret = self.nv[-1]/self.nv[0] - 1

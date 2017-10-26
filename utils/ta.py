@@ -22,8 +22,9 @@ class ATR(object):
             self.count += 1
             return AtrR(0,0)
         else:
-            arr = np.array([bar.high - bar.low,bar.high - self.bar.close, self.bar.close - bar.low])
+            arr = np.array([bar.high - bar.low, bar.high - self.bar.close, self.bar.close - bar.low])
             tr = arr.max()
+            print(tr)
 
             if self.count < self.cycle + 1:
                 self.n = (self.n * self.count + tr) / (self.count + 1)

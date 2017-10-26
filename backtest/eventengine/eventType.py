@@ -46,8 +46,12 @@ EVENT_ERROR = 'eError.'                 # 错误回报事件
 # 回测 tick
 EVENT_FILL = 'eFill' # 回测更新持仓
 # EVENT_PORTFOLIO = 'ePortfolio' # 回测更新账户持仓。。。
+EVENT_AFTER_FILL = 'eAfterFill'
 EVENT_NEXT_TICK = 'eNextTick' #获取下一个tick
-
+EVENT_NEXT_BAR = 'eNextBar'
+EVENT_NEXT_DAY = 'eNextDay'
+EVENT_DAY_END = 'eDayEnd'
+EVENT_OUTPUT = "eOutput"
 # ----------------------------------------------------------------------
 def test():
     """检查是否存在内容重复的常量定义"""

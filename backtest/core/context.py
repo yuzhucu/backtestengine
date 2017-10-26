@@ -28,10 +28,15 @@ class BacktestContext(object):
         self.universe = []
         self.datasource = 'mongo'
         self.multi_instruments = False
-        self.sup_data = {}
+        self.instmt_info = {}
         self.current_tick = {}
         self.current_bar = Bar()
-
+        self.settlement_price = 0
+        self.date = ''
+        self.data_day = {}
+        self.order_flag = False
+        self.datelist = {}
+        self.timestart=""
 
 class RunInfo(object):
     def __init__(self):
@@ -41,7 +46,7 @@ class RunInfo(object):
         self.start_date = ''  # 策略的开始日期
         self.end_date = ''  # datetime.date    策略的结束日期
         self.feed_frequency = ''  #策略频率，'1d' '1m' '1t
-        self.ip = 'localip'
+        self.ip = localip
         self.starting_cash = 0 # 期货账户初始资金
         self.slippage = 0  # 滑点水平
         self.benchmark = ''  # 基准合约代码
@@ -78,80 +83,70 @@ class Account(object):
 #         self.annualized_returns = 0 # 投资组合的年化收益率
 #         self.positions = [] # 一个包含所有仓位的字典，以order_book_id作为键，position对象作为值，关于position的更多的信息可以在下面的部分找到。
 
-class Position(object):
-    def __init__(self):
-        self.instrument_id = '' #合约代码
-        self.pnl = 0 # 累计盈亏
-        self.daily_pnl = 0 # 当日盈亏
-        self.holding_pnl = 0 # 持仓盈亏
-        self.realized_pnl = 0 # 平仓盈亏
-        self.transaction_cost = 0 #交易费用
-        self.margin = 0 #仓位总保证金
-        self.market_value = 0 #当前仓位的名义价值。如果当前净持仓为空方向持仓，则名义价值为负
-        self.buy_daily_pnl = 0 #多头仓位当日盈亏
-        self.buy_pnl = 0 #多头仓位累计盈亏
-        self.buy_transaction_cost = 0 #多头费用
-        self.closable_buy_quantity = 0 #可平多头持仓
-        self.buy_margin = 0#多头持仓占用保证金
-        self.buy_today_quantity = 0 # 多头今仓
-        self.buy_quantity = 0 # 多头持仓
-        self.buy_avg_open_price = 0 # 多头开仓均价
-        self.buy_avg_holding_price = 0 # 多头持仓均价
-        self.sell_daily_pnl = 0 # 空头仓位当日盈亏
-        self.sell_pnl = 0 # 空头仓位累计盈亏
-        self.sell_transaction_cost = 0 # 空头费用
-        self.closable_sell_quantity = 0 # 可平空头持仓
-        self.sell_margin = 0 # 空头持仓占用保证金
-        self.sell_today_quantity = 0 # 空头今仓
-        self.sell_quantity = 0 # 空头持仓
-        self.sell_avg_open_price = 0 # 空头开仓均价
-        self.sell_avg_holding_price = 0 # 空头持仓均价
+# class Position(object):
+#     def __init__(self):
+#         self.instrument_id = '' #合约代码
+#         self.pnl = 0 # 累计盈亏
+#         self.daily_pnl = 0 # 当日盈亏
+#         self.holding_pnl = 0 # 持仓盈亏
+#         self.realized_pnl = 0 # 平仓盈亏
+#         self.transaction_cost = 0 #交易费用
+#         self.margin = 0 #仓位总保证金
+#         self.market_value = 0 #当前仓位的名义价值。如果当前净持仓为空方向持仓，则名义价值为负
+#         self.buy_daily_pnl = 0 #多头仓位当日盈亏
+#         self.buy_pnl = 0 #多头仓位累计盈亏
+#         self.buy_transaction_cost = 0 #多头费用
+#         self.closable_buy_quantity = 0 #可平多头持仓
+#         self.buy_margin = 0#多头持仓占用保证金
+#         self.buy_today_quantity = 0 # 多头今仓
+#         self.buy_quantity = 0 # 多头持仓
+#         self.buy_avg_open_price = 0 # 多头开仓均价
+#         self.buy_avg_holding_price = 0 # 多头持仓均价
+#         self.sell_daily_pnl = 0 # 空头仓位当日盈亏
+#         self.sell_pnl = 0 # 空头仓位累计盈亏
+#         self.sell_transaction_cost = 0 # 空头费用
+#         self.closable_sell_quantity = 0 # 可平空头持仓
+#         self.sell_margin = 0 # 空头持仓占用保证金
+#         self.sell_today_quantity = 0 # 空头今仓
+#         self.sell_quantity = 0 # 空头持仓
+#         self.sell_avg_open_price = 0 # 空头开仓均价
+#         self.sell_avg_holding_price = 0 # 空头持仓均价
 
-class Order(object):
-    def __init__(self):
-        self.symbol = ''
-        self.direction = ''
-        self.offset = ''
-        self.vol = 0
-        self.limit_price = 0
-        self.stop_price = 0
-        self.stop_type = ''
-        self.status = 0
-        self.slippage = 0
+# class Order(object):
+#     def __init__(self):
+#         self.symbol = ''
+#         self.direction = ''
+#         self.offset = ''
+#         self.vol = 0
+#         self.limit_price = 0
+#         self.stop_price = 0
+#         self.stop_type = ''
+#         self.status = 0
+#         self.slippage = 0
+#
+#
 
-
-class Transaction(object):
-    def __init__(self):
-        self.symbol = ''
-        self.date = ''
-        self.time = ''
-        self.direction = ''
-        self.offset = ''
-        self.price = ''
-        self.vol = 0
-        self.commission = 0
-        self.pnl = 0
-
-
-class DailySummary(object):
-    def __init__(self):
-        self.date = ''
-        self.equity = 0
-        self.cash = 0
-        self.positions = []
-        self.upnl = 0
-        self.pnl = 0
-
-class Instrument(object):
-    def __init__(self):
-        self.instrument_id = '' # 期货代码
-        self.symbol = '' # 期货的简称，例如
-        self.margin_rate = 0 # 期货合约最低保证金率
-        self.abbrev_symbol = '' # 期货的名称缩写
-        self.listed_date = '' # 期货的上市日期。主力连续合约与指数连续合约都为 '0000-00-00'
-        self.contract_multiplier = 0 # 合约乘数，例如沪深300股指期货的乘数为300.0
-        self.underlying_symbol = '' # 合约标的名称，例如IF1005的合约标的名称为'IF'
-        self.maturity_date = '' # 期货到期日。主力连续合约与指数连续合约都为'0000-00-00'
-        self.settlement_method = '' # 交割方式，'CashSettlementRequired' - 现金交割, 'PhysicalSettlementRequired' - 实物交割
-        self.product = '' # 产品类型，'Index' - 股指期货, 'Commodity' - 商品期货, 'Government' - 国债期货
-        self.exchange = '' # 交易所，'DCE' - 大连商品交易所, 'SHFE' - 上海期货交易所，'CFFEX' - 中国金融期货交易所, 'CZCE' - 郑州商品交易所
+#
+#
+# class DailySummary(object):
+#     def __init__(self):
+#         self.date = ''
+#         self.equity = 0
+#         self.cash = 0
+#         self.positions = []
+#         self.upnl = 0
+#         self.pnl = 0
+#
+# class Instrument(object):
+#     def __init__(self):
+#         self.instrument_id = '' # 期货代码
+#         self.symbol = '' # 期货的简称，例如
+#         self.margin_rate = 0 # 期货合约最低保证金率
+#         self.abbrev_symbol = '' # 期货的名称缩写
+#         self.listed_date = '' # 期货的上市日期。主力连续合约与指数连续合约都为 '0000-00-00'
+#         self.contract_multiplier = 0 # 合约乘数，例如沪深300股指期货的乘数为300.0
+#         self.underlying_symbol = '' # 合约标的名称，例如IF1005的合约标的名称为'IF'
+#         self.maturity_date = '' # 期货到期日。主力连续合约与指数连续合约都为'0000-00-00'
+#         self.settlement_method = '' # 交割方式，'CashSettlementRequired' - 现金交割, 'PhysicalSettlementRequired' - 实物交割
+#         self.product = '' # 产品类型，'Index' - 股指期货, 'Commodity' - 商品期货, 'Government' - 国债期货
+#         self.exchange = '' # 交易所，'DCE' - 大连商品交易所, 'SHFE' - 上海期货交易所，'CFFEX' - 中国金融期货交易所, 'CZCE' - 郑州商品交易所
