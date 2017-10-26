@@ -108,6 +108,7 @@ class BollStrategy(BacktestStrategy):
                     self.context.direction = BUY
                     print('change to buy')
 
+
             # 突破上轨后跌破中轨开空单
             if data.close < boll.mb and self.context.direction == SELL and self.context.can_open_flag:
                 self._open(data)
