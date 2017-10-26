@@ -14,13 +14,13 @@ from datetime import datetime as dt
 
 class BollStrategy(BacktestStrategy):
     def initialize(self):
-        self.context.universe = ['j1801']
-        self.context.run_info.strategy_name = 'boll15m-6'
-        self.context.run_info.feed_frequency = '15m'
+        self.context.universe = ['SR801']
+        self.context.run_info.strategy_name = 'boll3m-sr'
+        self.context.run_info.feed_frequency = '3m'
 
-        self.context.run_info.start_date ='2017-06-01'
-        self.context.run_info.end_date = '2017-06-30'
-        self.context.run_info.ip = localip
+        self.context.run_info.start_date ='2017-05-01'
+        self.context.run_info.end_date = '2017-07-30'
+        self.context.run_info.ip = remoteip
 
 
         self.context.init_cash = 1000000
@@ -75,7 +75,7 @@ class BollStrategy(BacktestStrategy):
         else:
             self.context.open_flag = False
             self.context.direction = ''
-
+        print(self.context.open_flag)
 
     def handle_data(self, data):
         boll = self.context.boll.compute(data)
@@ -98,16 +98,16 @@ class BollStrategy(BacktestStrategy):
         #                                                                                                       self.context.portfolio.pre_balance))
         if boll is not None:
             print('date%d,time:%s, barclose:%d,up:%d,dn:.%d,mb:%d'%(self.context.date,self.context.current_bar.end_time,data.close,boll.up,boll.dn,boll.mb))
+
             if not self.context.open_flag:
-                if data.close > boll.up:
+                if data.close > boll.up and self.context.direction == '':
                     # print('时间:%s 突破上轨' % datetime.now())
                     self.context.direction = SELL
                     print('change to sell')
-                elif data.close < boll.dn:
+                elif data.close < boll.dn and self.context.direction == '':
                     # print('时间:%s 突破下轨' % datetime.now())
                     self.context.direction = BUY
                     print('change to buy')
-
 
             # 突破上轨后跌破中轨开空单
             if data.close < boll.mb and self.context.direction == SELL and self.context.can_open_flag:
@@ -153,7 +153,7 @@ class BollStrategy(BacktestStrategy):
     def _close(self, bar):
         self.context.close_count += 1
 
-        if self.context.close_count >= 3:
+        if self.context.close_count >= 5:
             # 平空
             open_price = bar.close + self.context.slippage
             direction = BUY

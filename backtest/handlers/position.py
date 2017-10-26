@@ -86,7 +86,7 @@ class BasePosition(object):
 
 
 class Position(object):
-    def __init__(self, symbol):
+    def __init__(self, symbol,info):
         self.symbol = symbol
         # self.marginratio = marginratio
         self.long_t = BasePosition(symbol=symbol, direction='long', init_price=0, init_vol=0, marginratio=0)
@@ -105,6 +105,7 @@ class Position(object):
         self.marginratio = 0
         self.upnl = 0
         self.pnl = 0
+        self.info = info
         # self.type = 'closed' if self.vol == 0 else 'open'
 
     def get_margin_req(self):

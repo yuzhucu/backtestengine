@@ -27,7 +27,6 @@ class BacktestContext(object):
         self.trade_history = []
         self.universe = []
         self.datasource = 'mongo'
-        self.multi_instruments = False
         self.instmt_info = {}
         self.current_tick = {}
         self.current_bar = Bar()

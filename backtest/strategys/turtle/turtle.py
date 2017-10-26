@@ -18,11 +18,11 @@ class Turtle(BacktestStrategy):
 
     def initialize(self):
         self.context.universe = ['j1801']
-        self.context.run_info.strategy_name = '海龟5m'
+        self.context.run_info.strategy_name = '海龟5m-1'
         self.context.run_info.feed_frequency = '5m'
 
-        self.context.run_info.start_date ='2017-06-01'
-        self.context.run_info.end_date = '2017-06-30'
+        self.context.run_info.start_date ='2017-05-01'
+        self.context.run_info.end_date = '2017-07-30'
         self.context.run_info.ip = localip
 
 
@@ -82,10 +82,12 @@ class Turtle(BacktestStrategy):
                 if data.close < low_bound or sl == 'BUY_STOP':
                     print('时间:%d %s 多单止损止盈' % (self.context.date, self.context.current_bar.end_time))
                     self._order(SELL, CLOSE, self.context.unit * self.context.unit_count, data.close, -self.context.slippage)
+                    # self.context.unit_count = 0
             if self.context.open_direction == SELL:
                 if data.close > high_bound or sl == 'SELL_STOP':
                     print('时间:%d %s 空单止损止盈' % (self.context.date, self.context.current_bar.end_time))
                     self._order(BUY, CLOSE, self.context.unit * self.context.unit_count, data.close, +self.context.slippage)
+                    # self.context.unit_count = 0
 
 
         # 开仓

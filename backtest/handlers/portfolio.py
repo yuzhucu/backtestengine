@@ -40,6 +40,7 @@ class Portfolio(object):
         self.withdraw = 0
         self.riskratio = 0
 
+
     def get_info(self):
         print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' %(self.upnl,self.marginreq,self.avail_cash,self.dailycomm,self.totalcomm,self.riskratio))
 
@@ -113,12 +114,13 @@ class Portfolio(object):
     #     self.init_cash += cash
     #     self.total_value += cash
 
-    def _open_position(self, symbol, direction, vol, price, marginratio, commission, time='9999', date=9999):
+    def _open_position(self, symbol, direction, vol, price, marginratio, commission, time='9999', date=9999,info={}):
+        comm_this_trans = 0
         if symbol in self.positions:  # 持仓中已有该合约
             print('持仓中已有该合约')
             raise ValueError
         else:
-            self.positions[symbol] = Position(symbol)
+            self.positions[symbol] = Position(symbol,info)
             # print('开仓', symbol, direction, vol, price, marginratio)
             if direction == 'long':
                 self.positions[symbol].long_t = BasePosition(symbol=symbol, direction=direction, init_vol=vol,
@@ -126,6 +128,7 @@ class Portfolio(object):
             else:
                 self.positions[symbol].short_t = BasePosition(symbol=symbol, direction=direction, init_vol=vol,
                                                            init_price=price, marginratio=marginratio)
+            print(self.positions[symbol].info)
             # print(self.positions[symbol].get_margin_req())
             # print('self.positions[symbol].upnl before update')
             # print(self.positions[symbol].upnl)
@@ -136,16 +139,22 @@ class Portfolio(object):
             # print(self.positions[symbol].upnl )
             self.marginreq = self._sum_marginreq()
             self.upnl = self._sum_upnl()
-            self.avail_cash -= self.positions[symbol].get_margin_req() - vol*price*commission
-            self.dailycomm += vol*price*commission
+            if self.positions[symbol].info['commission_type']=='value':
+                comm_this_trans = vol*price*commission
+            elif self.positions[symbol].info['commission_type']=='vol':
+                comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
+            print(comm_this_trans)
+            self.avail_cash -= self.positions[symbol].get_margin_req() - comm_this_trans
+            self.dailycomm += comm_this_trans
             # print(self.positions[symbol].marginreq)
             # self.positions[symbol].pnl = -commission
             if self.avail_cash < 0:
                 print('保证金不足，无法开仓')
                 raise ValueError
-            self.stats.transactions.append(TransactionRecord(symbol,direction,'open',vol,price,commission*vol*price,time,date,0))
+            self.stats.transactions.append(TransactionRecord(symbol,direction,'open',vol,price,comm_this_trans,time,date,0))
 
     def _add_position(self, symbol, direction, vol, price, commission=0, time = '9999',date=9999):
+        comm_this_trans = 0
         if symbol not in self.positions:
             print ('持仓中无此合约')
             raise ValueError
@@ -159,9 +168,12 @@ class Portfolio(object):
                     self.positions[symbol].update_value(price)
                     self.marginreq = self._sum_marginreq()
                     self.upnl = self._sum_upnl()
-                    comm_this_trans = commission * vol * price
+                    if self.positions[symbol].info['commission_type'] == 'value':
+                        comm_this_trans = vol * price * commission
+                    elif self.positions[symbol].info['commission_type'] == 'vol':
+                        comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
                     self.dailycomm += comm_this_trans
-                    self.avail_cash -= vol*price*self.positions[symbol].long_t.marginratio
+                    self.avail_cash -= vol*price*self.positions[symbol].long_t.marginratio - comm_this_trans
             else: # direction = short
                 if self.positions[symbol].short_t.vol == 0:
                     self.positions[symbol].short_t = BasePosition(symbol=symbol, direction=direction, init_vol=vol,
@@ -171,19 +183,23 @@ class Portfolio(object):
                     self.positions[symbol].update_value(price)
                     self.marginreq = self._sum_marginreq()
                     self.upnl = self._sum_upnl()
-                    comm_this_trans = commission * vol * price
+                    if self.positions[symbol].info['commission_type'] == 'value':
+                        comm_this_trans = vol * price * commission
+                    elif self.positions[symbol].info['commission_type'] == 'vol':
+                        comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
+
                     self.dailycomm += comm_this_trans
-                    self.avail_cash -= vol * price * self.positions[symbol].long_t.marginratio
+                    self.avail_cash -= vol * price * self.positions[symbol].long_t.marginratio - comm_this_trans
 
             if self.avail_cash <0:
                 print('保证金%d' % self.avail_cash)
                 print('保证金不足，无法加仓')
                 raise ValueError
-
             self.stats.transactions.append(
-                TransactionRecord(symbol, direction, 'open', vol, price, commission * vol * price, time,date,0))
+                TransactionRecord(symbol, direction, 'open', vol, price, comm_this_trans, time, date, 0))
 
     def _close_position_t(self, symbol, direction, vol, price, commission =0, time='9999',date=9999):  # 平今仓
+        comm_this_trans = 0
         if symbol not in self.positions:  # 持仓中无该合约
             print('持仓中无该合约')
             raise ValueError
@@ -195,8 +211,11 @@ class Portfolio(object):
                     raise ValueError
                 else:
                     pnl_this_trans = (price - self.positions[symbol].long_t.avg_cost_per_unit)*vol
-                    comm_this_trans = commission*vol*price
-                    self.avail_cash += self.positions[symbol].long_t.marginratio * price * vol
+                    if self.positions[symbol].info['commission_type'] == 'value':
+                        comm_this_trans = vol * price * commission
+                    elif self.positions[symbol].info['commission_type'] == 'vol':
+                        comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
+                    self.avail_cash += self.positions[symbol].long_t.marginratio * price * vol - comm_this_trans
                     # print(self.positions[symbol].long_t.upnl, self.positions[symbol].long_y.upnl,
                     #       self.positions[symbol].short_t.upnl, self.positions[symbol].short_y.upnl)
                     self.positions[symbol].long_t.close_position(vol=vol)
@@ -216,8 +235,11 @@ class Portfolio(object):
                     raise ValueError
                 else:
                     pnl_this_trans = (self.positions[symbol].short_t.avg_cost_per_unit-price)*vol
-                    comm_this_trans = commission*vol*price
-                    self.avail_cash += self.positions[symbol].short_t.marginratio * price * vol
+                    if self.positions[symbol].info['commission_type'] == 'value':
+                        comm_this_trans = vol * price * commission
+                    elif self.positions[symbol].info['commission_type'] == 'vol':
+                        comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
+                    self.avail_cash += self.positions[symbol].short_t.marginratio * price * vol - comm_this_trans
                     self.positions[symbol].short_t.close_position(vol=vol)
                     self.positions[symbol].update_value(price)
                     self.marginreq = self._sum_marginreq()
@@ -229,6 +251,7 @@ class Portfolio(object):
             self.stats.transactions.append(TransactionRecord(symbol, direction, 'closeT', vol, price, comm_this_trans, time, date,pnl_this_trans))
 
     def _close_position_y(self, symbol, direction, vol, price, commission=0, time = '9999',date=9999):  # 平昨仓
+        comm_this_trans = 0
         if symbol not in self.positions:  # 持仓中无该合约
             print('持仓中无该合约')
             raise ValueError
@@ -239,8 +262,12 @@ class Portfolio(object):
                     raise ValueError
                 else:
                     pnl_this_trans = (price - self.positions[symbol].long_y.avg_cost_per_unit)*vol
-                    comm_this_trans = commission*vol*price
-                    self.avail_cash += self.positions[symbol].long_y.marginratio * price * vol
+                    # comm_this_trans = 0
+                    if self.positions[symbol].info['commission_type'] == 'value':
+                        comm_this_trans = vol * price * commission
+                    elif self.positions[symbol].info['commission_type'] == 'vol':
+                        comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
+                    self.avail_cash += self.positions[symbol].long_y.marginratio * price * vol-comm_this_trans
                     self.positions[symbol].long_y.close_position(vol=vol)
                     self.positions[symbol].update_value(price)
                     self.marginreq = self._sum_marginreq()
@@ -255,8 +282,12 @@ class Portfolio(object):
                     raise ValueError
                 else:
                     pnl_this_trans = (self.positions[symbol].short_y.avg_cost_per_unit-price)*vol
-                    comm_this_trans = commission*vol*price
-                    self.avail_cash += self.positions[symbol].short_y.marginratio * price * vol
+                    # comm_this_trans = 0
+                    if self.positions[symbol].info['commission_type'] == 'value':
+                        comm_this_trans = vol * price * commission
+                    elif self.positions[symbol].info['commission_type'] == 'vol':
+                        comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
+                    self.avail_cash += self.positions[symbol].short_y.marginratio * price * vol - comm_this_trans
                     self.positions[symbol].short_y.close_position(vol=vol)
                     self.positions[symbol].update_value(price)
                     self.marginreq = self._sum_marginreq()
@@ -291,7 +322,7 @@ class Portfolio(object):
                     self._close_position_t(symbol, direction, vol_t, price, commission_y, time,date)
                     self._close_position_y(symbol, direction, vol_y, price, commission_y, time,date)
 
-    def modify_position(self, symbol, direction, offset, vol, price, marginratio=0, comm_t = 0, comm_y=0, comm_o=0, time ='9999',date=9999, exch_code=''):
+    def modify_position(self, symbol, direction, offset, vol, price, marginratio=0, comm_t = 0, comm_y=0, comm_o=0, time ='9999',date=9999, exch_code='',info={}):
         print('modify direction:%s offset:%s vol:%d price:%d date:%d time:%s now:%s' % (direction,offset,vol,price,date,time,datetime.datetime.now()))
         print('modify portfolio %s:' % datetime.datetime.now(),4)
         # print('before trade')
@@ -301,7 +332,7 @@ class Portfolio(object):
             if symbol in self.positions:
                 self._add_position(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_o, time=time, date=date)
             else: # open new position
-                self._open_position(symbol=symbol, direction=direction, vol=vol, price=price, marginratio=marginratio, commission=comm_o, time=time, date=date)
+                self._open_position(symbol=symbol, direction=direction, vol=vol, price=price, marginratio=marginratio, commission=comm_o, time=time, date=date,info=info)
 
         elif offset == 'close_t':
             if exch_code == 'CZCE' or exch_code == 'DCE':

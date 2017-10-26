@@ -52,6 +52,7 @@ EVENT_NEXT_BAR = 'eNextBar'
 EVENT_NEXT_DAY = 'eNextDay'
 EVENT_DAY_END = 'eDayEnd'
 EVENT_OUTPUT = "eOutput"
+EVENT_ON_FEED = 'eOnFeed'
 # ----------------------------------------------------------------------
 def test():
     """检查是否存在内容重复的常量定义"""
