@@ -14,18 +14,15 @@ from datetime import datetime as dt
 
 class BollStrategy(BacktestStrategy):
     def initialize(self):
-        self.context.universe = ['SR801']
-        self.context.run_info.strategy_name = 'boll3m-sr'
+        self.context.universe = ['l1801']
+        self.context.run_info.strategy_name = 'boll3m-l801'
         self.context.run_info.feed_frequency = '3m'
 
-        self.context.run_info.start_date ='2017-05-01'
-        self.context.run_info.end_date = '2017-07-30'
-        self.context.run_info.ip = remoteip
-
+        self.context.run_info.start_date ='2017-10-23'
+        self.context.run_info.end_date = '2017-10-23'
+        self.context.run_info.ip = localip
 
         self.context.init_cash = 1000000
-
-
 
         self.context.boll = Boll()
         self.context.cash = 1000000  # 初始资金
@@ -176,4 +173,7 @@ class BollStrategy(BacktestStrategy):
 
 if __name__ == '__main__':
     t = BollStrategy()
-    t.run()
+    out = t.run()
+    sleep(3)
+    print(out)
+    # out.output()

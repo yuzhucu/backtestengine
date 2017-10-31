@@ -45,13 +45,13 @@ class TradeDataMongo(object):
     def __get_pre_settlement_price(self):
         collection = self.client.futures[self.db]  # different collections
         price = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date}, ['PreSettlementPrice'])
-        return list(price)[1]['PreSettlementPrice']
+        return list(price)[-1]['PreSettlementPrice']
 
     def get_settlement_price(self):
         next_day = GetTradeDates(ip=self.ip).get_next_trading_day(self.date)
         collection = self.client.futures[self.db]  # different collections
         price = collection.find({"InstrumentID": self.symbol, "TradingDay": next_day}, ['PreSettlementPrice'])
-        return list(price)[1]['PreSettlementPrice']
+        return list(price)[-1]['PreSettlementPrice']
 
 
 class InstmtInfoMongo(object):

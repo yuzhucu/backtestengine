@@ -32,7 +32,10 @@ def instidtoprodid (instid):
     for i in instid:
         if i.isalpha():
             prodid += i
-    return prodid
+    return prodid.lower()
+
+
+# print(instidtoprodid('RB801'))
 
 def ticktobar (tick):   #takes tick cursor object and transfer it to iter bar event
     templs = []

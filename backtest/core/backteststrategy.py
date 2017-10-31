@@ -85,7 +85,7 @@ class BacktestStrategy(object):
                     self.context.data_day = data_ticks
                     self._next_tick()
 
-                elif self.context.run_info.feed_frequency in ['30s','1m','3m','5m','10m','30m','60m','1d']:  # handle bar data
+                elif self.context.run_info.feed_frequency in ['30s','1m','3m','5m','15m','30m','60m','1d']:  # handle bar data
                     data_bars = self.__get_bar(date, self.context.universe[0], freq=self.context.run_info.feed_frequency)
                     self.context.data_day = data_bars
                     self._next_bar()
@@ -108,7 +108,7 @@ class BacktestStrategy(object):
             self.context.current_bar = bar_obj  # save current bar to context
             event = Event(EVENT_ON_FEED)
             event.dict = bar_obj
-            self.context.portfolio.update_portfolio(event.dict.close)  # update portfolio
+            self.context.portfolio.update_portfolio(event.dict.close,time=str(self.context.date)+' '+self.context.current_bar.end_time)  # update portfolio
             self._engine.sendEvent(event)
         except StopIteration:  # when bar interation ends, start day end process
             event =Event(EVENT_DAY_END)
@@ -276,8 +276,9 @@ class BacktestStrategy(object):
         self._engine.sendEvent(event)
 
 
-    def _handle_output(self,event={}):
+    def _handle_output(self, event={}):
         self.context.portfolio.stats.nv = np.array(self.context.portfolio.netvalue)
+        self.context.portfolio.stats.datetime = self.context.portfolio.datetime
         # print(self.context.portfolio.stats.nv)
         self.context.portfolio.stats.output()
 

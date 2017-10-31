@@ -47,7 +47,8 @@ columns = ['InstrumentID',
            'VolumeSpread',
            'MidPrice',
            'Depth',
-           'Slope'
+           'Slope',
+           'levelNo'
            ]
 
 miniclms = ['InstrumentID',

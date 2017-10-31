@@ -5,14 +5,17 @@ import matplotlib.pyplot as plt
 import pylab as pl
 import xlwt
 import datetime
+from backtest.analyzer.output_config import *
 
 class Stats(object):
     def __init__(self):
         self.backtestid = ''
         self.nv = np.array([])
+        self.datetime = []
         self.dates = []
         self.transactions = []
         self.dailysummary = []
+        self.tradecount = 0
 
 
     def maxdd(self):
@@ -142,6 +145,7 @@ class Stats(object):
             overview = outputwb.add_sheet('overview')
             transdetail = outputwb.add_sheet('transactions')
             dailysummary = outputwb.add_sheet('daily_summary')
+            netvalue = outputwb.add_sheet('net_value')
 
             overview.write(0, 0, 'true_return')
             overview.write(0, 1, self.returns(ret_type=ret_type, freq='def'))
@@ -161,7 +165,7 @@ class Stats(object):
             overview.write(7, 1, self.total_commission())
             overview.write(0, 3, 'initial_cash')
             overview.write(0, 4, float(self.nv[0]))
-            overview.write(1, 3, 'final_cash')
+            overview.write(1, 3, 'final_value')
             overview.write(1, 4, float(self.nv[-1]))
             # overview.write(0, 6, self.nvplot())
 
@@ -205,8 +209,14 @@ class Stats(object):
                 dailysummary.write(j+1, 3, daily.upnl)
                 dailysummary.write(j+1, 4, daily.pnl)
                 dailysummary.write(j+1, 5, daily.marginreq)
-                dailysummary.write(j + 1, 6, daily.daily_comm)
-                dailysummary.write(j + 1, 7, daily.riskratio)
+                dailysummary.write(j+1, 6, daily.daily_comm)
+                dailysummary.write(j+1, 7, daily.riskratio)
+
+            netvalue.write(0, 0, 'time')
+            netvalue.write(0, 1, 'net_value')
+            for i in range(0,len(self.datetime)):
+                netvalue.write(i+1,0,self.datetime[i])
+                netvalue.write(i+1,1,self.nv[i])
 
 
             outputwb.save('backtest-'+str(self.dates[0])+'-'+str(self.dates[-1])+'-'+self.backtestid+'.xls')

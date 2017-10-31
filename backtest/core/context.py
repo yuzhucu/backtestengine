@@ -22,7 +22,7 @@ class BacktestContext(object):
         self.init_cash = 0
         self.positions = []
         self.portfolio = Portfolio(0)
-        self.stats = Stats()
+        # self.stats = Stats()
         self.run_info = RunInfo()
         self.trade_history = []
         self.universe = []
@@ -36,6 +36,8 @@ class BacktestContext(object):
         self.order_flag = False
         self.datelist = {}
         self.timestart=""
+        self.dayend = []
+        self.comparision = Comparison()
 
 class RunInfo(object):
     def __init__(self):
@@ -63,6 +65,19 @@ class Account(object):
         self.margin = 0  # 已占用保证金
         self.buy_margin = 0  # 多头保证金
         self.sell_margin = 0  # 空头保证金
+
+
+class Comparison(object):
+    def __init__(self):
+        self.datelst = []
+        self.dayend_value = []
+        self.simplereturn = []
+        self.logreturn = []
+        self.volit = []
+        self.sharpe = []
+        self.maxdd = []
+        self.totalcommission = []
+        self.tradecount = []
 
 # class Portfolio(object):
 #     def __init__(self):

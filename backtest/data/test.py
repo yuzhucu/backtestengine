@@ -89,13 +89,19 @@ from backtest.tools.tools import *
 #
 # print(b)
 
-a = GetTradeDates().get_date_list('20170601','20170630')
+# a = TradeDataMongo(symbol='SR801', date=20170502, column=columns).get_bar_data(freq='15m')
+# b = TradeDataMongo(symbol='ZC706', date=20170531, column=miniclms).get_tick_data()
+# #
+# df = pd.DataFrame(list(a))
+# #
+# df1 = pd.DataFrame(list(b))
+# # print(df)
+# print(df1)
+# #
+# # df.to_csv('SR801-20170614.csv')
 
-b = iter(a)
 
-print(b.__next__())
-print(b.__next__())
-print(b.__next__())
-print(b.__next__())
-print(b.__next__())
-print(b.__next__())
+# a = np.array([1000])
+# np.insert(a,1,1)
+#
+# print(a)
