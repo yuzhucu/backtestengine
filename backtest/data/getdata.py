@@ -153,6 +153,6 @@ class GetTradeDates(object):
     # data = pymongo.MongoClient(ip=ip, port=27017).collection.find({"InstrumentID": symbol, "TradingDay": date}, ['SettlementPrice'])
     # return list(data[-1])
 
-
-# a = TradeDataMongo('j1801',20170724).get_settlement_price()
+#
+# a = TradeDataMongo('cs1801',20170103).get_settlement_price()
 # print(a)

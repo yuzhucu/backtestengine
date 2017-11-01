@@ -287,7 +287,7 @@ class BacktestStrategy(object):
         print('回测共耗时%s' % timespend)
 
         self._engine.stop()
-        return self.context.stats
+        return self.context.portfolio.stats
 
 
 

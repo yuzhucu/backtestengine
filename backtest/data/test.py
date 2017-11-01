@@ -89,16 +89,16 @@ from backtest.tools.tools import *
 #
 # print(b)
 
-# a = TradeDataMongo(symbol='SR801', date=20170502, column=columns).get_bar_data(freq='15m')
-# b = TradeDataMongo(symbol='ZC706', date=20170531, column=miniclms).get_tick_data()
+# a = TradeDataMongo(symbol='SR801', date=20170510).get_bar_data(freq='30s')
+b = TradeDataMongo(symbol='cs1801', date=20170213, column=['TradingDay','UpdateTime','LastPrice','levelNo']).get_bar_data(freq='30s')
 # #
 # df = pd.DataFrame(list(a))
 # #
-# df1 = pd.DataFrame(list(b))
-# # print(df)
-# print(df1)
+df1 = pd.DataFrame(list(b))
+# print(df)
+print(df1)
 # #
-# # df.to_csv('SR801-20170614.csv')
+# df1.to_csv('SR801-20170509-bar.csv')
 
 
 # a = np.array([1000])

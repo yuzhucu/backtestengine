@@ -17,6 +17,7 @@ from backtest.data.datatools import *
 from backtest.handlers.position import *
 from backtest.handlers.portfolio import *
 from backtest.tools.tools import *
+from backtest.tools.ta import *
 
 
 
@@ -269,13 +270,28 @@ class StrategyCompareDay(object):
 
     def _handle_dayend(self, event={}):
         self.context.portfolio.dayend_summary(date=self.context.date,
-                                              settlement_price=self.context.settlement_price)
+                                              settlement_price=self.context.current_bar.close)
         print(self.context.date)
 
-        # self.context.portfolio.stats.
+        self.context.portfolio.stats.nv = np.array(self.context.portfolio.netvalue)
         self.context.comparision.datelst.append(self.context.date)
         self.context.comparision.dayend_value.append(self.context.portfolio.total_value)
+        self.context.comparision.simplereturn.append(self.context.portfolio.stats.returns('simple', 'def'))
+        self.context.comparision.logreturn.append(self.context.portfolio.stats.returns('log', 'def'))
+        self.context.comparision.volit.append(self.context.portfolio.stats.volatility())
+        self.context.comparision.maxdd.append(self.context.portfolio.stats.maxdd())
+        self.context.comparision.sharpe.append(self.context.portfolio.stats.sharpe())
+        self.context.comparision.totalcommission.append(self.context.portfolio.totalcomm)
+        self.context.comparision.tradecount.append(self.context.portfolio.tradecount)
+        self.context.comparision.trans += self.context.portfolio.stats.transactions
 
+
+        self.context.direction = ''
+        self.context.open_vol = 0 # 当前开仓手数
+        self.context.open_flag = False # false表示没有开仓 true表示已经开仓了
+        self.context.can_open_flag = True # ture 表示能继续开仓 flase 表示已经开足仓了
+        self.context.close_count = 0 # 平仓计数器
+        self.context.boll =Boll()
 
         self.context.portfolio = Portfolio(init_cash=self.context.init_cash)
         event = Event(EVENT_NEXT_DAY)
@@ -283,17 +299,61 @@ class StrategyCompareDay(object):
 
 
     def _handle_output(self, event={}):
-        self.context.portfolio.stats.nv = np.array(self.context.portfolio.netvalue)
-        self.context.portfolio.stats.datetime = self.context.portfolio.datetime
-        # print(self.context.portfolio.stats.nv)
-        self.context.portfolio.stats.output()
+        outputwb = xlwt.Workbook()
+        dayend = outputwb.add_sheet('dayend')
+        transdetail = outputwb.add_sheet('transactions')
+
+        dayend.write(0, 0, 'date')
+        dayend.write(0, 1, 'value')
+        dayend.write(0, 2, 'simple_return')
+        dayend.write(0, 3, 'log_return')
+        dayend.write(0, 4, 'volitility')
+        dayend.write(0, 5, 'maxdd')
+        dayend.write(0, 6, 'sharpe')
+        dayend.write(0, 7, 'total_commission')
+        dayend.write(0, 8, 'trade_count')
+
+        for i in range(0, len(self.context.comparision.datelst)):
+            dayend.write(i+1, 0, self.context.comparision.datelst[i])
+            dayend.write(i+1, 1, self.context.comparision.dayend_value[i])
+            dayend.write(i+1, 2, self.context.comparision.simplereturn[i])
+            dayend.write(i+1, 3, self.context.comparision.logreturn[i])
+            dayend.write(i+1, 4, self.context.comparision.volit[i])
+            dayend.write(i+1, 5, self.context.comparision.maxdd[i])
+            dayend.write(i+1, 6, self.context.comparision.sharpe[i])
+            dayend.write(i+1, 7, self.context.comparision.totalcommission[i])
+            dayend.write(i+1, 8, self.context.comparision.tradecount[i])
+
+        transdetail.write(0, 0, 'date')
+        transdetail.write(0, 1, 'time')
+        transdetail.write(0, 2, 'symbol')
+        transdetail.write(0, 3, 'direction')
+        transdetail.write(0, 4, 'offset')
+        transdetail.write(0, 5, 'price')
+        transdetail.write(0, 6, 'volume')
+        transdetail.write(0, 7, 'commission')
+        transdetail.write(0, 8, 'realized gain/loss')
+
+        for i in range(0, len(self.context.comparision.trans)):
+            trans = self.context.comparision.trans[i]
+            transdetail.write(i + 1, 0, trans.date)
+            transdetail.write(i + 1, 1, trans.time)
+            transdetail.write(i + 1, 2, trans.symbol)
+            transdetail.write(i + 1, 3, trans.direction)
+            transdetail.write(i + 1, 4, trans.offset)
+            transdetail.write(i + 1, 5, trans.price)
+            transdetail.write(i + 1, 6, trans.vol)
+            transdetail.write(i + 1, 7, trans.commission)
+            transdetail.write(i + 1, 8, trans.pnl)
+
+        outputwb.save('backtest-comp-' +self.context.run_info.strategy_name+ str(self.context.comparision.datelst[0]) + '-' + str(self.context.comparision.datelst[-1]) + '.xls')
 
         timeend = datetime.datetime.now()
         timespend = timeend - self.context.timestart
         print('回测共耗时%s' % timespend)
 
         self._engine.stop()
-        return self.context.stats
+
 
 
 

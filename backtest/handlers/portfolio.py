@@ -40,11 +40,11 @@ class Portfolio(object):
         self.deposite = 0
         self.withdraw = 0
         self.riskratio = 0
+        self.tradecount = 0
 
 
     def get_info(self):
         print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' %(self.upnl,self.marginreq,self.avail_cash,self.dailycomm,self.totalcomm,self.riskratio))
-
 
     def update_portfolio(self,price,time):
         # print(price)
@@ -65,7 +65,6 @@ class Portfolio(object):
         for position in self.positions:
             self.positions[position].combine_position_dayend()
 
-
     def dayend_summary(self,date, settlement_price):
         print('before dayend')
         print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' % (
@@ -73,8 +72,6 @@ class Portfolio(object):
         # print(settlement_price)
         self._update_upnl(settlement_price)
         self.upnl = self._sum_upnl()
-
-
 
         dayend = DailySummary()
         dayend.date = date
@@ -334,7 +331,6 @@ class Portfolio(object):
                     self.dailypnl += pnl_this_trans
                     self.dailycomm += comm_this_trans
 
-
             self.stats.transactions.append(TransactionRecord(symbol, direction, 'closeY', vol, price, comm_this_trans, time,date, pnl_this_trans))
 
     def _close_position(self, symbol, direction, vol, price, commission_t=0,commission_y=0,time='9999',date=9999, exch_code=''):  # 先平今再平昨
@@ -368,6 +364,7 @@ class Portfolio(object):
         # print('before trade')
         # print(self.positions[symbol].long_t.upnl,self.positions[symbol].long_y.upnl,self.positions[symbol].short_t.upnl,self.positions[symbol].short_y.upnl)
         # print(exch_code)
+        self.tradecount += 1
         if offset == 'open':
             if symbol in self.positions:
                 self._add_position(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_o, time=time, date=date)

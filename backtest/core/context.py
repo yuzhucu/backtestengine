@@ -78,6 +78,7 @@ class Comparison(object):
         self.maxdd = []
         self.totalcommission = []
         self.tradecount = []
+        self.trans = []
 
 # class Portfolio(object):
 #     def __init__(self):

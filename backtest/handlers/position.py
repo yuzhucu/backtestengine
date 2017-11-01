@@ -160,10 +160,7 @@ class Position(object):
         position2.clear_position()
 
 
-
-
-
-def combine_positions(position1, position2): #combine to a new position
+def combine_positions(position1, position2):  #combine to a new position
     if position1.direction == position2.direction:
         position = BasePosition(symbol=position1.symbol,
                                 direction=position1.direction,

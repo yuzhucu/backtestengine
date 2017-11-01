@@ -5,18 +5,19 @@
 @version: python3.6
 @author: ‘sj‘
 @contact: songjie1217@hotmail.com
-@file: boll.py
-@time: 10/24/17 5:23 PM
+@file: boll-reverse.py
+@time: 11/1/17 10:58 AM
 """
+
 from backtest.core.backteststrategy import *
 from backtest.optimizer.optimizer import *
 from backtest.tools.ta import *
 from datetime import datetime as dt
 
-class BollStrategy(StrategyCompareDay):
+class BollStrategyReverse(StrategyCompareDay):
     def initialize(self):
-        self.context.universe = ['v1709']
-        self.context.run_info.strategy_name = 'boll30s-v1709-minus1'
+        self.context.universe = ['cs1801']
+        self.context.run_info.strategy_name = 'boll30s-cs1801-reverse'
         self.context.run_info.feed_frequency = '30s'
 
         self.context.run_info.start_date ='2017-05-01'
@@ -29,7 +30,7 @@ class BollStrategy(StrategyCompareDay):
         self.context.cash = 1000000  # 初始资金
         self.context.cash_rate = 0.3 # 资金利用率
         # self.context.future_info = ts.get_future_info(self.context.universe[0]) # 获取合约属性
-        self.context.slippage = -1 # 开仓价 变化幅度 2 个变动单位
+        self.context.slippage = 0 # 开仓价 变化幅度 2 个变动单位
 
         self.context.direction = ''
         self.context.open_vol = 0 # 当前开仓手数
@@ -173,5 +174,5 @@ class BollStrategy(StrategyCompareDay):
 
 
 if __name__ == '__main__':
-    t = BollStrategy()
+    t = BollStrategyReverse()
     t.run()
