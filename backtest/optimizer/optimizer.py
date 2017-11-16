@@ -42,6 +42,7 @@ class StrategyCompareDay(object):
 
         # context里保存所有需要的信息
         self.context = BacktestContext()
+        # self.context.run_info = RunInfo()
 
 
     def initialize(self):
@@ -67,7 +68,6 @@ class StrategyCompareDay(object):
         trade_days = len(datelist)
         print('交易日共 %d 天' % trade_days)
         self.context.datelist = iter(datelist)  # generate datelist iterator
-        self.context.instmt_info = InstmtInfoMongo(symbol=self.context.universe[0]).get_instmt_info()  # get future info
         self.context.portfolio = Portfolio(self.context.init_cash)  # initiate portfolio from init cash
         self.context.portfolio.stats.backtestid = self.context.run_info.strategy_name  # save backtest name to context
         self._next_day()  # start backtest
@@ -78,17 +78,24 @@ class StrategyCompareDay(object):
             self.context.date = date
             print('日期:%d' %date)
             self.context.portfolio.stats.dates.append(date)
-            self.context.settlement_price = TradeDataMongo(self.context.universe[0], date, column=columns,
-                                                           ip=self.context.run_info.ip).get_settlement_price() #get settlement price for daily summary
+            self.context.current_contract = self.context.universe
+            if self.context.run_info.main_contract:
+                self.context.current_contract = self.__get_main_contract(date=date, symbols=self.context.universe, ip=self.context.run_info.ip)
+
 
             if len(self.context.universe) == 1:  # handle single instrument
+                self.context.instmt_info = InstmtInfoMongo(
+                    symbol=self.context.current_contract[0]).get_instmt_info()  # get future info
+                self.context.settlement_price = TradeDataMongo(self.context.current_contract[0], date, column=columns,
+                                                               ip=self.context.run_info.ip).get_settlement_price()  # get settlement price for daily summary
+
                 if self.context.run_info.feed_frequency == 'tick':  # handle tick data
-                    data_ticks = self.__get_tick(date, self.context.universe[0])  # get tick data
+                    data_ticks = self.__get_tick(date, self.context.current_contract[0],ip=self.context.run_info.ip)  # get tick data
                     self.context.data_day = data_ticks
                     self._next_tick()
 
                 elif self.context.run_info.feed_frequency in ['30s','1m','3m','5m','15m','30m','60m','1d']:  # handle bar data
-                    data_bars = self.__get_bar(date, self.context.universe[0], freq=self.context.run_info.feed_frequency)
+                    data_bars = self.__get_bar(date, self.context.current_contract[0], freq=self.context.run_info.feed_frequency,ip=self.context.run_info.ip)
                     self.context.data_day = data_bars
                     self._next_bar()
 
@@ -106,14 +113,15 @@ class StrategyCompareDay(object):
         try:  # start bar interation within day
             row = self.context.data_day.next()
             bar_obj = create_bar_obj(row)  # create bar object
-            print(self.context.date, bar_obj.end_time, bar_obj.close)
+            # print(self.context.date, bar_obj.end_time, bar_obj.close)
             self.context.current_bar = bar_obj  # save current bar to context
             event = Event(EVENT_ON_FEED)
             event.dict = bar_obj
             self.context.portfolio.update_portfolio(event.dict.close,time=str(self.context.date)+' '+self.context.current_bar.end_time)  # update portfolio
             self._engine.sendEvent(event)
         except StopIteration:  # when bar interation ends, start day end process
-            event =Event(EVENT_DAY_END)
+            # self.context.portfolio
+            event = Event(EVENT_DAY_END)
             self._engine.sendEvent(event)
            # sleep(0.1)
 
@@ -126,7 +134,7 @@ class StrategyCompareDay(object):
             self.context.portfolio.update_portfolio(event.dict['LastPrice'])  # update portfolio
             self._engine.sendEvent(event)
         except StopIteration:  # when bar interation ends, start day end process
-            event =Event(EVENT_DAY_END)
+            event = Event(EVENT_DAY_END)
             self._engine.sendEvent(event)
 
     def _handle_data(self, event):
@@ -141,7 +149,7 @@ class StrategyCompareDay(object):
         else:  # if order_flag, order itself will send move on signal
             pass
 
-    def order(self, instrument_id, direction, offset, vol, limit_price=0, stop_price=0, contingent_condition='immediately'):
+    def order(self, instrument_id, direction, offset, vol, limit_price=0, stop_price=0, contingent_condition='immediately',type = '',max_dev=0):
 
         '''
         下单
@@ -170,7 +178,9 @@ class StrategyCompareDay(object):
             'direction': direction,
             'offset': offset,
             'stop_price': stop_price,
-            'contingent_condition': contingent_condition
+            'contingent_condition': contingent_condition,
+            'type': type,
+            'max_dev': max_dev
             # 'cancel_flag': False
         }
         # print(self.context.current_data['endTime'])
@@ -213,37 +223,37 @@ class StrategyCompareDay(object):
             self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close',
                                                    vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
-                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
+                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,type=order['type'],max_dev=order['max_dev'])
 
         elif order['direction'] == BUY and order['offset'] == CLOSE_T:
             self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close_t',
                                                    vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
-                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
+                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,type=order['type'],max_dev=order['max_dev'])
 
         elif order['direction'] == BUY and order['offset'] == CLOSE_Y:
             self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close_y',
                                                    vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
-                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
+                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,type=order['type'],max_dev=order['max_dev'])
 
         elif order['direction'] == SELL and order['offset'] == CLOSE:
             self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close',
                                                    vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
-                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
+                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,type=order['type'],max_dev=order['max_dev'])
 
         elif order['direction'] == SELL and order['offset'] == CLOSE_T:
             self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close_t',
                                                    vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
-                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
+                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,type=order['type'],max_dev=order['max_dev'])
 
         elif order['direction'] == SELL and order['offset'] == CLOSE_Y:
             self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close_y',
                                                    vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
-                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
+                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,type=order['type'],max_dev=order['max_dev'])
         # else:
         #     # 撤单
         #     pass
@@ -283,15 +293,19 @@ class StrategyCompareDay(object):
         self.context.comparision.sharpe.append(self.context.portfolio.stats.sharpe())
         self.context.comparision.totalcommission.append(self.context.portfolio.totalcomm)
         self.context.comparision.tradecount.append(self.context.portfolio.tradecount)
+        self.context.comparision.net_profit.append(self.context.portfolio.total_value-self.context.init_cash)
         self.context.comparision.trans += self.context.portfolio.stats.transactions
 
+        #
+        # self.context.direction = ''
+        # self.context.open_vol = 0 # 当前开仓手数
+        # self.context.open_flag = False # false表示没有开仓 true表示已经开仓了
+        # self.context.can_open_flag = True # ture 表示能继续开仓 flase 表示已经开足仓了
+        # self.context.close_count = 0 # 平仓计数器
+        # self.context.boll =Boll()
+        # self.context.open_price = 0
 
-        self.context.direction = ''
-        self.context.open_vol = 0 # 当前开仓手数
-        self.context.open_flag = False # false表示没有开仓 true表示已经开仓了
-        self.context.can_open_flag = True # ture 表示能继续开仓 flase 表示已经开足仓了
-        self.context.close_count = 0 # 平仓计数器
-        self.context.boll =Boll()
+        self.initialize()
 
         self.context.portfolio = Portfolio(init_cash=self.context.init_cash)
         event = Event(EVENT_NEXT_DAY)
@@ -303,6 +317,19 @@ class StrategyCompareDay(object):
         dayend = outputwb.add_sheet('dayend')
         transdetail = outputwb.add_sheet('transactions')
 
+        profit = np.array(self.context.comparision.net_profit)
+        avg_profit = np.mean(profit)
+        std_profit = np.std(profit)
+
+        n = len(profit)
+        count_gain = 0
+        for i in self.context.comparision.net_profit:
+            if i >0:
+                count_gain += 1
+
+        count_loss = n - count_gain
+
+
         dayend.write(0, 0, 'date')
         dayend.write(0, 1, 'value')
         dayend.write(0, 2, 'simple_return')
@@ -312,6 +339,19 @@ class StrategyCompareDay(object):
         dayend.write(0, 6, 'sharpe')
         dayend.write(0, 7, 'total_commission')
         dayend.write(0, 8, 'trade_count')
+        dayend.write(0, 9, 'net_profit')
+        dayend.write(1, 11, 'average_profit')
+        dayend.write(2, 11, 'std_profit')
+        dayend.write(3, 11, 'days_total')
+        dayend.write(4, 11, 'days_gain')
+        dayend.write(5, 11, 'days_loss')
+
+        dayend.write(1, 12, avg_profit)
+        dayend.write(2, 12, std_profit)
+        dayend.write(3, 12, n)
+        dayend.write(4, 12, count_gain)
+        dayend.write(5, 12, count_loss)
+
 
         for i in range(0, len(self.context.comparision.datelst)):
             dayend.write(i+1, 0, self.context.comparision.datelst[i])
@@ -323,30 +363,38 @@ class StrategyCompareDay(object):
             dayend.write(i+1, 6, self.context.comparision.sharpe[i])
             dayend.write(i+1, 7, self.context.comparision.totalcommission[i])
             dayend.write(i+1, 8, self.context.comparision.tradecount[i])
+            dayend.write(i+1, 9, self.context.comparision.net_profit[i])
 
-        transdetail.write(0, 0, 'date')
-        transdetail.write(0, 1, 'time')
-        transdetail.write(0, 2, 'symbol')
-        transdetail.write(0, 3, 'direction')
-        transdetail.write(0, 4, 'offset')
-        transdetail.write(0, 5, 'price')
-        transdetail.write(0, 6, 'volume')
-        transdetail.write(0, 7, 'commission')
-        transdetail.write(0, 8, 'realized gain/loss')
+        transdetail.write(0, 0, 'index')
+        transdetail.write(0, 1, 'date')
+        transdetail.write(0, 2, 'time')
+        transdetail.write(0, 3, 'symbol')
+        transdetail.write(0, 4, 'direction')
+        transdetail.write(0, 5, 'offset')
+        transdetail.write(0, 6, 'price')
+        transdetail.write(0, 7, 'volume')
+        transdetail.write(0, 8, 'commission')
+        transdetail.write(0, 9, 'realized gain/loss')
+        transdetail.write(0, 10, 'max_dev')
+        transdetail.write(0, 11, 'type')
 
         for i in range(0, len(self.context.comparision.trans)):
             trans = self.context.comparision.trans[i]
-            transdetail.write(i + 1, 0, trans.date)
-            transdetail.write(i + 1, 1, trans.time)
-            transdetail.write(i + 1, 2, trans.symbol)
-            transdetail.write(i + 1, 3, trans.direction)
-            transdetail.write(i + 1, 4, trans.offset)
-            transdetail.write(i + 1, 5, trans.price)
-            transdetail.write(i + 1, 6, trans.vol)
-            transdetail.write(i + 1, 7, trans.commission)
-            transdetail.write(i + 1, 8, trans.pnl)
+            transdetail.write(i + 1, 0, i)
+            transdetail.write(i + 1, 1, trans.date)
+            transdetail.write(i + 1, 2, trans.time)
+            transdetail.write(i + 1, 3, trans.symbol)
+            transdetail.write(i + 1, 4, trans.direction)
+            transdetail.write(i + 1, 5, trans.offset)
+            transdetail.write(i + 1, 6, trans.price)
+            transdetail.write(i + 1, 7, trans.vol)
+            transdetail.write(i + 1, 8, trans.commission)
+            transdetail.write(i + 1, 9, trans.pnl)
+            transdetail.write(i + 1, 10, trans.max_dev)
+            transdetail.write(i + 1, 11, trans.type)
 
-        outputwb.save('backtest-comp-' +self.context.run_info.strategy_name+ str(self.context.comparision.datelst[0]) + '-' + str(self.context.comparision.datelst[-1]) + '.xls')
+        outputwb.save(self.context.run_info.strategy_name + '-'+ str(self.context.comparision.datelst[0]) + '-'
+                      + str(self.context.comparision.datelst[-1]) + '-backtest-comp' + '.xls')
 
         timeend = datetime.datetime.now()
         timespend = timeend - self.context.timestart
@@ -378,30 +426,39 @@ class StrategyCompareDay(object):
         self._engine.stop()
 
     # 获取tick
-    def __get_tick(self, date, symbol):
+    def __get_tick(self, date, symbol, ip):
+        tick={}
         if self.context.datasource == 'mongo':
-            tick = TradeDataMongo(symbol=symbol, date=date,column=miniclms, ip=remoteip).get_tick_data()  # 数据库取某天的tick
+            tick = TradeDataMongo(symbol=symbol, date=date,column=miniclms, ip=ip).get_tick_data()  # 数据库取某天的tick
         elif self.context.datasource == 'csv':
             tick = GetDataCSV(symbol + '-' + date + '.csv').get_tick()
         return tick
 
-    def __get_ticks_dict(self, date, symbols):
+    def __get_ticks_dict(self, date, symbols,ip):
         ticks = {}
         for symbol in symbols:
-            ticks[symbol] = self.__get_tick(date, symbol)
+            ticks[symbol] = self.__get_tick(date, symbol,ip)
         return ticks
 
-    def __get_bar(self, date, symbol, freq):
+    def __get_bar(self, date, symbol, freq, ip):
         bar = {}
         if self.context.datasource == 'mongo':
-            bar = TradeDataMongo(symbol=symbol, date=date, column=miniclms, ip=remoteip).get_bar_data(freq=freq)  # 数据库取某天的tick
+            bar = TradeDataMongo(symbol=symbol, date=date, column=miniclms, ip=ip).get_bar_data(freq=freq)  # 数据库取某天的tick
         elif self.context.datasource == 'csv':
             bar = GetDataCSV(symbol + '-' + date + '.csv').get_tick()
         return bar
 
-    def __get_bars_dict(self, date, symbols):
+    def __get_bars_dict(self, date, symbols,ip):
         bars = {}
         for symbol in symbols:
-            bars[symbol] = self.__get_bar(date, symbol)
+            bars[symbol] = self.__get_bar(date, symbol,ip)
         return bars
 
+    def __get_main_contract(self, date, symbols, ip):
+        main_contract = []
+        if self.context.datasource == 'mongo':
+            for symbol in symbols:
+                main_contract.append(TradeDataMongo(symbol=symbol, date=date, column=miniclms, ip=ip).get_main_contract())  # 数据库取某天的tick
+        elif self.context.datasource == 'csv':
+            pass
+        return main_contract

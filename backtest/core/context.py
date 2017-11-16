@@ -14,10 +14,11 @@ from backtest.handlers.position import *
 from backtest.handlers.order import *
 from backtest.analyzer.analyzer import *
 from backtest.data.datatype import *
+from queue import *
 
 class BacktestContext(object):
     def __init__(self):
-        self.unfilled_orders = []
+        self.unfilled_orders = Queue()
         self.account = Account()
         self.init_cash = 0
         self.positions = []
@@ -25,8 +26,6 @@ class BacktestContext(object):
         # self.stats = Stats()
         self.run_info = RunInfo()
         self.trade_history = []
-        self.universe = []
-        self.datasource = 'mongo'
         self.instmt_info = {}
         self.current_tick = {}
         self.current_bar = Bar()
@@ -38,6 +37,11 @@ class BacktestContext(object):
         self.timestart=""
         self.dayend = []
         self.comparision = Comparison()
+        self.datasource = 'mongo'
+        self.universe = []
+        self.current_contract = []
+        self.max_dev = 0
+
 
 class RunInfo(object):
     def __init__(self):
@@ -48,9 +52,13 @@ class RunInfo(object):
         self.end_date = ''  # datetime.date    策略的结束日期
         self.feed_frequency = ''  #策略频率，'1d' '1m' '1t
         self.ip = localip
+        self.universe = []
+        self.datasource = 'mongo'
         self.starting_cash = 0 # 期货账户初始资金
         self.slippage = 0  # 滑点水平
         self.benchmark = ''  # 基准合约代码
+        self.main_contract = False
+
 
 class Account(object):
     def __init__(self):
@@ -79,6 +87,7 @@ class Comparison(object):
         self.totalcommission = []
         self.tradecount = []
         self.trans = []
+        self.net_profit = []
 
 # class Portfolio(object):
 #     def __init__(self):

@@ -10,6 +10,9 @@
 """
 
 # direction
+LONG = 'long'
+SHORT = 'short'
+
 BUY = 'buy'
 SELL = 'sell'
 
@@ -17,5 +20,5 @@ SELL = 'sell'
 # action
 OPEN = 'open'
 CLOSE = 'close'
-CLOSE_T = 'closetoday'
-CLOSE_Y = 'closeyesterday'
+CLOSE_T = 'closeT'
+CLOSE_Y = 'closeY'

@@ -20,7 +20,7 @@ class Order(object):
         self.vol = 0
         self.limit_price = 0
         self.stop_price = 0
-        self.stop_type = ''
+        self.stop_type = 'immediately'
         self.status = 0
         self.slippage = 0
 
@@ -38,7 +38,7 @@ class Transaction(object):
         self.pnl = 0
 
 class TransactionRecord(object):
-    def __init__(self, symbol, direction, offset, vol, deal_price, commission, transtime, date, pnl):
+    def __init__(self, symbol, direction, offset, vol, deal_price, commission, transtime, date, pnl, type = '', max_dev = 0):
         self.symbol = symbol
         self.date = date
         self.time = transtime
@@ -48,6 +48,8 @@ class TransactionRecord(object):
         self.vol = vol
         self.commission = commission
         self.pnl = pnl
+        self.type = type
+        self.max_dev = max_dev
 
 class DailySummary(object):
     def __init__(self):

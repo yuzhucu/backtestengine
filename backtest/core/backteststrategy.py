@@ -75,18 +75,22 @@ class BacktestStrategy(object):
             date = self.context.datelist.__next__()
             self.context.date = date
             print('日期:%d' %date)
+            self.context.current_contract = self.context.universe
+            # print(self.context.run_info.main_contract)
+            if self.context.run_info.main_contract:
+                self.context.current_contract = self.__get_main_contract(date=date, symbols=self.context.universe, ip=self.context.run_info.ip)
             self.context.portfolio.stats.dates.append(date)
             self.context.settlement_price = TradeDataMongo(self.context.universe[0], date, column=columns,
                                                            ip=self.context.run_info.ip).get_settlement_price() #get settlement price for daily summary
 
             if len(self.context.universe) == 1:  # handle single instrument
                 if self.context.run_info.feed_frequency == 'tick':  # handle tick data
-                    data_ticks = self.__get_tick(date, self.context.universe[0])  # get tick data
+                    data_ticks = self.__get_tick(date, self.context.universe[0],self.context.run_info.ip)  # get tick data
                     self.context.data_day = data_ticks
                     self._next_tick()
 
                 elif self.context.run_info.feed_frequency in ['30s','1m','3m','5m','15m','30m','60m','1d']:  # handle bar data
-                    data_bars = self.__get_bar(date, self.context.universe[0], freq=self.context.run_info.feed_frequency)
+                    data_bars = self.__get_bar(date, self.context.universe[0], freq=self.context.run_info.feed_frequency,ip=self.context.run_info.ip)
                     self.context.data_day = data_bars
                     self._next_bar()
 
@@ -157,20 +161,21 @@ class BacktestStrategy(object):
         if limit_price == 0:
             price_type = 'any'
 
+        order = Order()
+
+        order.symbol = instrument_id
+        order.direction = direction
+        order.offset = offset
+        order.vol = vol
+        order.limit_price = limit_price
+        order.stop_price = stop_price
+        order.stop_type = contingent_condition
+        order.status = ''
+        order.slippage = 0
+
         event = Event(EVENT_ORDER)
 
-        event.dict = {
-            # 'tick':self.context.current_tick,
-            'symbol': instrument_id,
-            'vol': vol,
-            'limit_price': limit_price,
-            'pricetype': price_type,
-            'direction': direction,
-            'offset': offset,
-            'stop_price': stop_price,
-            'contingent_condition': contingent_condition
-            # 'cancel_flag': False
-        }
+        event.dict = order
         # print(self.context.current_data['endTime'])
         # print(event.dict)
         print("beforesend %s:" %datetime.datetime.now(),2)
@@ -194,52 +199,52 @@ class BacktestStrategy(object):
         date = self.context.date
         print('receive order %s:' %datetime.datetime.now(),3)
         # print('order direction:%s offset:%s vol:%d price:%d date:%d time:%s' %
-        #       (order['direction'],order['offset'],order['vol'],order['limit_price'],date,time))
-        if order['direction'] == BUY and order['offset'] == OPEN:
-            self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='open',
-                                                   vol=order['vol']*contract_size, price=order['limit_price'],
+        #       (order.direction,order.offset,order.vol,order.limit_price,date,time))
+        if order.direction == BUY and order.offset == OPEN:
+            self.context.portfolio.modify_position(symbol=order.symbol, direction='long', offset='open',
+                                                   vol=order.vol*contract_size, price=order.limit_price,
                                                    marginratio=margin, comm_o=comm_o, comm_t=comm_t, comm_y=comm_y,
                                                    time=time, date=date, exch_code=exch_code,info=self.context.instmt_info)
 
-        elif order['direction'] == SELL and order['offset'] == OPEN:
-            self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='open',
-                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
+        elif order.direction == SELL and order.offset == OPEN:
+            self.context.portfolio.modify_position(symbol=order.symbol, direction='short', offset='open',
+                                                   vol=order.vol * contract_size, price=order.limit_price,
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,info=self.context.instmt_info)
 
-        elif order['direction'] == BUY and order['offset'] == CLOSE:
-            self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close',
-                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
+        elif order.direction == BUY and order.offset == CLOSE:
+            self.context.portfolio.modify_position(symbol=order.symbol, direction='short', offset='close',
+                                                   vol=order.vol * contract_size, price=order.limit_price,
+                                                   marginratio=margin,
+                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time, date=date, exch_code=exch_code)
+
+        elif order.direction == BUY and order.offset == CLOSE_T:
+            self.context.portfolio.modify_position(symbol=order.symbol, direction='short', offset='close_t',
+                                                   vol=order.vol * contract_size, price=order.limit_price,
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
 
-        elif order['direction'] == BUY and order['offset'] == CLOSE_T:
-            self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close_t',
-                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
+        elif order.direction == BUY and order.offset == CLOSE_Y:
+            self.context.portfolio.modify_position(symbol=order.symbol, direction='short', offset='close_y',
+                                                   vol=order.vol * contract_size, price=order.limit_price,
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
 
-        elif order['direction'] == BUY and order['offset'] == CLOSE_Y:
-            self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close_y',
-                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
+        elif order.direction == SELL and order.offset == CLOSE:
+            self.context.portfolio.modify_position(symbol=order.symbol, direction='long', offset='close',
+                                                   vol=order.vol * contract_size, price=order.limit_price,
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
 
-        elif order['direction'] == SELL and order['offset'] == CLOSE:
-            self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close',
-                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
+        elif order.direction == SELL and order.offset == CLOSE_T:
+            self.context.portfolio.modify_position(symbol=order.symbol, direction='long', offset='close_t',
+                                                   vol=order.vol * contract_size, price=order.limit_price,
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
 
-        elif order['direction'] == SELL and order['offset'] == CLOSE_T:
-            self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close_t',
-                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
-                                                   marginratio=margin,
-                                                   comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
-
-        elif order['direction'] == SELL and order['offset'] == CLOSE_Y:
-            self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close_y',
-                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
+        elif order.direction == SELL and order.offset == CLOSE_Y:
+            self.context.portfolio.modify_position(symbol=order.symbol, direction='long', offset='close_y',
+                                                   vol=order.vol * contract_size, price=order.limit_price,
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
         # else:
@@ -312,30 +317,38 @@ class BacktestStrategy(object):
         self._engine.stop()
 
     # 获取tick
-    def __get_tick(self, date, symbol):
+    def __get_tick(self, date, symbol,ip):
         if self.context.datasource == 'mongo':
-            tick = TradeDataMongo(symbol=symbol, date=date,column=miniclms, ip=remoteip).get_tick_data()  # 数据库取某天的tick
+            tick = TradeDataMongo(symbol=symbol, date=date,column=miniclms, ip=ip).get_tick_data()  # 数据库取某天的tick
         elif self.context.datasource == 'csv':
             tick = GetDataCSV(symbol + '-' + date + '.csv').get_tick()
         return tick
 
-    def __get_ticks_dict(self, date, symbols):
+    def __get_ticks_dict(self, date, symbols,ip):
         ticks = {}
         for symbol in symbols:
-            ticks[symbol] = self.__get_tick(date, symbol)
+            ticks[symbol] = self.__get_tick(date, symbol,ip)
         return ticks
 
-    def __get_bar(self, date, symbol, freq):
+    def __get_bar(self, date, symbol, freq,ip):
         bar = {}
         if self.context.datasource == 'mongo':
-            bar = TradeDataMongo(symbol=symbol, date=date, column=miniclms, ip=remoteip).get_bar_data(freq=freq)  # 数据库取某天的tick
+            bar = TradeDataMongo(symbol=symbol, date=date, column=miniclms, ip=ip).get_bar_data(freq=freq)  # 数据库取某天的tick
         elif self.context.datasource == 'csv':
             bar = GetDataCSV(symbol + '-' + date + '.csv').get_tick()
         return bar
 
-    def __get_bars_dict(self, date, symbols):
+    def __get_bars_dict(self, date, symbols,ip):
         bars = {}
         for symbol in symbols:
-            bars[symbol] = self.__get_bar(date, symbol)
+            bars[symbol] = self.__get_bar(date, symbol,ip)
         return bars
 
+    def __get_main_contract(self, date, symbols, ip):
+        main_contract = []
+        if self.context.datasource == 'mongo':
+            for symbol in symbols:
+                main_contract.append(TradeDataMongo(symbol=symbol, date=date, column=miniclms, ip=ip).get_main_contract())  # 数据库取某天的tick
+        elif self.context.datasource == 'csv':
+            pass
+        return main_contract

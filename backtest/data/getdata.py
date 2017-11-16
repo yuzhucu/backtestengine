@@ -34,7 +34,7 @@ class TradeDataMongo(object):
     def get_tick_data(self):
         # client = pymongo.MongoClient(self.ip, port)
         collection = self.client.futures[self.db]  # different collections
-        tickdata = collection.find({"InstrumentID": self.symbol, "TradingDay": self.date}, self.column).sort('levelNo', 1)
+        tickdata = collection.find({"InstrumentID": self.symbol, "TradeDate": self.date}, self.column).sort('levelNo', 1)
         return tickdata
 
     def get_bar_data(self, freq = '1m'):
@@ -48,11 +48,18 @@ class TradeDataMongo(object):
         return list(price)[-1]['PreSettlementPrice']
 
     def get_settlement_price(self):
+        print(self.symbol)
+        print(self.date)
         next_day = GetTradeDates(ip=self.ip).get_next_trading_day(self.date)
+        print(next_day)
         collection = self.client.futures[self.db]  # different collections
         price = collection.find({"InstrumentID": self.symbol, "TradingDay": next_day}, ['PreSettlementPrice'])
         return list(price)[-1]['PreSettlementPrice']
 
+    def get_main_contract(self):
+        collection = self.client.futures.main_contract
+        contract = collection.find({"Product": self.code, "TradingDay": self.date}, ['InstrumentID'])
+        return list(contract)[0]['InstrumentID']
 
 class InstmtInfoMongo(object):
     def __init__(self, symbol, ip=remoteip):

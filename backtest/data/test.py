@@ -89,19 +89,30 @@ from backtest.tools.tools import *
 #
 # print(b)
 
-# a = TradeDataMongo(symbol='SR801', date=20170510).get_bar_data(freq='30s')
-b = TradeDataMongo(symbol='cs1801', date=20170213, column=['TradingDay','UpdateTime','LastPrice','levelNo']).get_bar_data(freq='30s')
-# #
-# df = pd.DataFrame(list(a))
-# #
+# a = TradeDataMongo(symbol='SR801', date=20170510).get_main_contract()
+# print(a)
+b = TradeDataMongo(symbol='l1710', date=20170426, column=['TradingDay','UpdateTime', 'LastPrice', 'Volume','levelNo','PreSettlementPrice']).get_bar_data(freq='30s')
+# # #
+# # df = pd.DataFrame(list(a))
+# # #
 df1 = pd.DataFrame(list(b))
+# print(b)
 # print(df)
 print(df1)
 # #
-# df1.to_csv('SR801-20170509-bar.csv')
-
-
-# a = np.array([1000])
-# np.insert(a,1,1)
 #
+# # a = np.array([1000])
+# # np.insert(a,1,1)
+# #
+# # print(a)
+#
+# # a = [-1, 2, 4, 0, -5, -8]
+# #
+# # b = np.array(a)
+# #
+# # print(len(b))
+# # print(b.mean())
+#
+# # print(pd.DataFrame(list(b)))
+# # a = GetTradeDates().get_date_list(start=20170101,end=20170128)
 # print(a)

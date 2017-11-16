@@ -234,7 +234,7 @@ class Portfolio(object):
             self.stats.transactions.append(
                 TransactionRecord(symbol, direction, 'open', vol, price, comm_this_trans, time, date, 0))
 
-    def _close_position_t(self, symbol, direction, vol, price, commission =0, time='9999',date=9999):  # 平今仓
+    def _close_position_t(self, symbol, direction, vol, price, commission =0, time='9999',date=9999,type='',max_dev = 0):  # 平今仓
         comm_this_trans = 0
         if symbol not in self.positions:  # 持仓中无该合约
             print('持仓中无该合约')
@@ -284,9 +284,9 @@ class Portfolio(object):
                     self.dailycomm += comm_this_trans
 
 
-            self.stats.transactions.append(TransactionRecord(symbol, direction, 'closeT', vol, price, comm_this_trans, time, date,pnl_this_trans))
+            self.stats.transactions.append(TransactionRecord(symbol, direction, 'closeT', vol, price, comm_this_trans, time, date,pnl_this_trans,type,max_dev))
 
-    def _close_position_y(self, symbol, direction, vol, price, commission=0, time = '9999',date=9999):  # 平昨仓
+    def _close_position_y(self, symbol, direction, vol, price, commission=0, time = '9999',date=9999,type='',max_dev = 0):  # 平昨仓
         comm_this_trans = 0
         if symbol not in self.positions:  # 持仓中无该合约
             print('持仓中无该合约')
@@ -331,9 +331,9 @@ class Portfolio(object):
                     self.dailypnl += pnl_this_trans
                     self.dailycomm += comm_this_trans
 
-            self.stats.transactions.append(TransactionRecord(symbol, direction, 'closeY', vol, price, comm_this_trans, time,date, pnl_this_trans))
+            self.stats.transactions.append(TransactionRecord(symbol, direction, 'closeY', vol, price, comm_this_trans, time,date, pnl_this_trans,type,max_dev))
 
-    def _close_position(self, symbol, direction, vol, price, commission_t=0,commission_y=0,time='9999',date=9999, exch_code=''):  # 先平今再平昨
+    def _close_position(self, symbol, direction, vol, price, commission_t=0,commission_y=0,time='9999',date=9999, exch_code='',type='',max_dev = 0):  # 先平今再平昨
         # print(self.positions[symbol].long_t.vol)
         if symbol not in self.positions:  # 持仓中无该合约
             print('持仓中无该合约')
@@ -341,23 +341,23 @@ class Portfolio(object):
         else:  # 持仓中有该合约
             if direction == 'long':  # 平多单
                 if self.positions[symbol].long_t.vol >= vol:
-                    self._close_position_t(symbol,direction, vol, price, commission_t, time, date)
+                    self._close_position_t(symbol,direction, vol, price, commission_t, time, date,type,max_dev)
                 else:
                     vol_t = self.positions[symbol].long_t.vol
                     vol_y = vol-self.positions[symbol].long_t.vol
-                    self._close_position_t(symbol, direction, vol_t, price, commission_y, time, date)
-                    self._close_position_y(symbol, direction, vol_y, price, commission_y, time, date)
+                    self._close_position_t(symbol, direction, vol_t, price, commission_y, time, date,type,max_dev)
+                    self._close_position_y(symbol, direction, vol_y, price, commission_y, time, date,type,max_dev)
 
             else: # sell
                 if self.positions[symbol].short_t.vol >= vol:
-                    self._close_position_t(symbol,direction, vol, price, commission_t, time, date)
+                    self._close_position_t(symbol,direction, vol, price, commission_t, time, date,type,max_dev)
                 else:
                     vol_t = self.positions[symbol].short_t.vol
                     vol_y = vol-self.positions[symbol].short_t.vol
-                    self._close_position_t(symbol, direction, vol_t, price, commission_y, time, date)
-                    self._close_position_y(symbol, direction, vol_y, price, commission_y, time, date)
+                    self._close_position_t(symbol, direction, vol_t, price, commission_y, time, date,type,max_dev)
+                    self._close_position_y(symbol, direction, vol_y, price, commission_y, time, date,type,max_dev)
 
-    def modify_position(self, symbol, direction, offset, vol, price, marginratio=0, comm_t=0, comm_y=0, comm_o=0, time ='9999', date=9999, exch_code='',info={}):
+    def modify_position(self, symbol, direction, offset, vol, price, marginratio=0, comm_t=0, comm_y=0, comm_o=0, time ='9999', date=9999, exch_code='',info={},type='',max_dev=0):
         print('modify direction:%s offset:%s vol:%d price:%d date:%d time:%s now:%s' % (direction, offset, vol, price, date, time, datetime.datetime.now()))
         print("comm", comm_o,comm_t,comm_y)
         print('modify portfolio %s:' % datetime.datetime.now(),4)
@@ -373,27 +373,27 @@ class Portfolio(object):
 
         elif offset == 'close_t':
             if exch_code == 'CZCE' or exch_code == 'DCE':
-                self._close_position(symbol=symbol, direction=direction, vol=vol, price=price, commission_t=comm_t, commission_y=comm_y, time=time, date=date)
+                self._close_position(symbol=symbol, direction=direction, vol=vol, price=price, commission_t=comm_t, commission_y=comm_y, time=time, date=date,type=type,max_dev=max_dev)
             elif exch_code == 'SHFE':
-                self._close_position_t(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_t, time=time, date=date)
+                self._close_position_t(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_t, time=time, date=date,type=type,max_dev=max_dev)
             else:
                 print('please enter correct exchange code')
                 raise ValueError
 
         elif offset == 'close_y':
             if exch_code == 'CZCE' or exch_code == 'DCE':
-                self._close_position(symbol=symbol, direction=direction, vol=vol, price=price, commission_t=comm_t, commission_y=comm_y, time=time,date=date)
+                self._close_position(symbol=symbol, direction=direction, vol=vol, price=price, commission_t=comm_t, commission_y=comm_y, time=time,date=date,type=type,max_dev=max_dev)
             elif exch_code == 'SHFE':
-                self._close_position_y(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_y, time=time, date=date)
+                self._close_position_y(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_y, time=time, date=date,type=type,max_dev=max_dev)
             else:
                 print('please enter correct exchange code')
                 raise ValueError
 
         elif offset == 'close':
             if exch_code == 'CZCE' or exch_code == 'DCE':
-                self._close_position(symbol=symbol, direction=direction, vol=vol, price=price, commission_t=comm_t, commission_y=comm_y, time=time,date=date)
+                self._close_position(symbol=symbol, direction=direction, vol=vol, price=price, commission_t=comm_t, commission_y=comm_y, time=time,date=date,type=type,max_dev=max_dev)
             elif exch_code == 'SHFE':
-                self._close_position_y(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_y, time=time, date=date)
+                self._close_position_y(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_y, time=time, date=date,type=type,max_dev=max_dev)
             else:
                 print('please enter correct exchange code')
                 raise ValueError

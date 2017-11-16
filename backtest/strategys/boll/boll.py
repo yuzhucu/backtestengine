@@ -15,12 +15,12 @@ from datetime import datetime as dt
 
 class BollStrategy(StrategyCompareDay):
     def initialize(self):
-        self.context.universe = ['v1709']
-        self.context.run_info.strategy_name = 'boll30s-v1709-minus1'
+        self.context.universe = ['al1707']
+        self.context.run_info.strategy_name = 'boll30s-al1707'
         self.context.run_info.feed_frequency = '30s'
 
         self.context.run_info.start_date ='2017-05-01'
-        self.context.run_info.end_date = '2017-07-29'
+        self.context.run_info.end_date = '2017-05-31'
         self.context.run_info.ip = localip
 
         self.context.init_cash = 1000000
@@ -29,13 +29,13 @@ class BollStrategy(StrategyCompareDay):
         self.context.cash = 1000000  # 初始资金
         self.context.cash_rate = 0.3 # 资金利用率
         # self.context.future_info = ts.get_future_info(self.context.universe[0]) # 获取合约属性
-        self.context.slippage = -1 # 开仓价 变化幅度 2 个变动单位
+        self.context.slippage = 0  # 开仓价 变化幅度 2 个变动单位
 
         self.context.direction = ''
-        self.context.open_vol = 0 # 当前开仓手数
-        self.context.open_flag = False # false表示没有开仓 true表示已经开仓了
-        self.context.can_open_flag = True # ture 表示能继续开仓 flase 表示已经开足仓了
-        self.context.close_count = 0 # 平仓计数器
+        self.context.open_vol = 0  # 当前开仓手数
+        self.context.open_flag = False  # false表示没有开仓 true表示已经开仓了
+        self.context.can_open_flag = True  # ture 表示能继续开仓 flase 表示已经开足仓了
+        self.context.close_count = 0  # 平仓计数器
 
 
 
@@ -58,15 +58,15 @@ class BollStrategy(StrategyCompareDay):
 
     def order_change(self,order):
         print('update unit %s:' %datetime.datetime.now(),5)
-        # print(self.context.open_vol)
-        # print(order['vol'])
+        print(self.context.open_vol)
+        print(order['vol'])
         # self.context.last_price = data['limit_price']
         if order['offset'] == OPEN:  # 开
             self.context.open_vol += order['vol']
         elif order['offset'] == CLOSE:  # 平今
             self.context.open_vol -= order['vol']
 
-        # print(self.context.open_vol)
+        print(self.context.open_vol)
 
         if self.context.open_vol > 0:
             self.context.open_flag = True
@@ -162,8 +162,9 @@ class BollStrategy(StrategyCompareDay):
 
             if self.context.open_vol > 0:
                 # print('时间:%s 平今:%s 手' % (datetime.now(), self.context.open_vol))
+                print(self.context.open_vol)
                 print('时间:%d %s 平:%s 手' % (self.context.date, self.context.current_bar.end_time, self.context.open_vol))
-                self.order(self.context.universe[0], direction, CLOSE, self.context.open_vol,limit_price=open_price)
+                self.order(self.context.universe[0], direction, CLOSE_T, self.context.open_vol,limit_price=open_price)
                 self.context.can_open_flag = True
                 self.context.close_count = 0
             # else:
