@@ -165,9 +165,55 @@ class BollR(object):
         self.mb = mb
         self.dn = dn
 
-
     def __str__(self):
         return 'Boll: up %.2f, mb: %.2f, dn: %.2f' %(self.up, self.mb, self.dn)
+
+
+class KDJ(object):
+    def __init__(self, k1, d1, cyclenum,a = 1/3, b=1/3, ):
+        self.a = a
+        self.b = b
+        # self.k1 = k1
+        # self.d1 = d1
+        self.cyclenum = cyclenum
+        self.barlow = []
+        self.barhigh = []
+
+    def compute(self,bar,k1,d1):
+        self.barlow.append(bar.low)
+        self.barhigh.append(bar.high)
+        # print(self.barlow)
+        # print(self.barhigh)
+        bar_len = len(self.barlow)
+        if bar_len < self.cyclenum:
+            return None
+        else:
+            high = max(self.barhigh)
+            low = min(self.barlow)
+            close = bar.close
+            if high != low:
+                rsv = 100 * (close - low)/(high - low)
+            else:
+                rsv = 50
+            k2 = (1 - self.a) * k1 + self.a * rsv
+            d2 = (1 - self.b) * d1 + self.b * k2
+            j2 = 3*k2 - 2*d2
+            kdjout = KDJOut(k1=k1,d1=d1,k2=k2,d2=d2,j2=j2)
+            del self.barhigh[0]
+            del self.barlow[0]
+            return kdjout
+
+
+class KDJOut(object):
+    def __init__(self, k1, d1, k2,d2,j2):
+        self.k1 = k1
+        self.k2 = k2
+        self.d1 = d1
+        self.d2 = d2
+        self.j2 = j2
+
+    def __str__(self):
+        return 'KDJ: k1 %.2f, d1: %.2f, k2: %.2f, d2: %.2f, j1: %.2f' %(self.k1, self.d1, self.k2, self.d2, self.j2)
 
 
 if __name__ == '__main__':

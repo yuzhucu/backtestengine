@@ -161,17 +161,17 @@ class BacktestStrategy(object):
         if limit_price == 0:
             price_type = 'any'
 
-        order = Order()
+        order = {}
 
-        order.symbol = instrument_id
-        order.direction = direction
-        order.offset = offset
-        order.vol = vol
-        order.limit_price = limit_price
-        order.stop_price = stop_price
-        order.stop_type = contingent_condition
-        order.status = ''
-        order.slippage = 0
+        order['symbol'] = instrument_id
+        order['direction'] = direction
+        order['offset'] = offset
+        order['vol'] = vol
+        order['limit_price'] = limit_price
+        order['stop_price'] = stop_price
+        order['stop_type'] = contingent_condition
+        order['status'] = ''
+        order['slippage'] = 0
 
         event = Event(EVENT_ORDER)
 
@@ -199,52 +199,52 @@ class BacktestStrategy(object):
         date = self.context.date
         print('receive order %s:' %datetime.datetime.now(),3)
         # print('order direction:%s offset:%s vol:%d price:%d date:%d time:%s' %
-        #       (order.direction,order.offset,order.vol,order.limit_price,date,time))
-        if order.direction == BUY and order.offset == OPEN:
-            self.context.portfolio.modify_position(symbol=order.symbol, direction='long', offset='open',
-                                                   vol=order.vol*contract_size, price=order.limit_price,
+        #       (order.direction,order.offset,order['vol'],order.limit_price,date,time))
+        if order['direction'] == BUY and order['offset'] == OPEN:
+            self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='open',
+                                                   vol=order['vol']*contract_size, price=order['limit_price'],
                                                    marginratio=margin, comm_o=comm_o, comm_t=comm_t, comm_y=comm_y,
                                                    time=time, date=date, exch_code=exch_code,info=self.context.instmt_info)
 
-        elif order.direction == SELL and order.offset == OPEN:
-            self.context.portfolio.modify_position(symbol=order.symbol, direction='short', offset='open',
-                                                   vol=order.vol * contract_size, price=order.limit_price,
+        elif order['direction']  == SELL and order['offset'] == OPEN:
+            self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='open',
+                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,info=self.context.instmt_info)
 
-        elif order.direction == BUY and order.offset == CLOSE:
-            self.context.portfolio.modify_position(symbol=order.symbol, direction='short', offset='close',
-                                                   vol=order.vol * contract_size, price=order.limit_price,
+        elif order['direction']  == BUY and order['offset'] == CLOSE:
+            self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close',
+                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time, date=date, exch_code=exch_code)
 
-        elif order.direction == BUY and order.offset == CLOSE_T:
-            self.context.portfolio.modify_position(symbol=order.symbol, direction='short', offset='close_t',
-                                                   vol=order.vol * contract_size, price=order.limit_price,
+        elif order['direction']  == BUY and order['offset'] == CLOSE_T:
+            self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close_t',
+                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
 
-        elif order.direction == BUY and order.offset == CLOSE_Y:
-            self.context.portfolio.modify_position(symbol=order.symbol, direction='short', offset='close_y',
-                                                   vol=order.vol * contract_size, price=order.limit_price,
+        elif order['direction']  == BUY and order['offset'] == CLOSE_Y:
+            self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close_y',
+                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
 
-        elif order.direction == SELL and order.offset == CLOSE:
-            self.context.portfolio.modify_position(symbol=order.symbol, direction='long', offset='close',
-                                                   vol=order.vol * contract_size, price=order.limit_price,
+        elif order['direction']  == SELL and order['offset'] == CLOSE:
+            self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close',
+                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
 
-        elif order.direction == SELL and order.offset == CLOSE_T:
-            self.context.portfolio.modify_position(symbol=order.symbol, direction='long', offset='close_t',
-                                                   vol=order.vol * contract_size, price=order.limit_price,
+        elif order['direction']  == SELL and order['offset'] == CLOSE_T:
+            self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close_t',
+                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
 
-        elif order.direction == SELL and order.offset == CLOSE_Y:
-            self.context.portfolio.modify_position(symbol=order.symbol, direction='long', offset='close_y',
-                                                   vol=order.vol * contract_size, price=order.limit_price,
+        elif order['direction']  == SELL and order['offset'] == CLOSE_Y:
+            self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close_y',
+                                                   vol=order['vol'] * contract_size, price=order['limit_price'],
                                                    marginratio=margin,
                                                    comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code)
         # else:
