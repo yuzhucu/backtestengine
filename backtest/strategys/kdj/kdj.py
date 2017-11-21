@@ -13,19 +13,18 @@ from backtest.core.backteststrategy import *
 from backtest.optimizer.optimizer import *
 from backtest.tools.ta import *
 
-class KdjStrategy(StrategyCompareDay):
+class KdjStrategy(BacktestStrategy):
     def initialize(self):
         self.context.universe = ['SR801']
-        self.context.run_info.strategy_name = 'kdj1m04-sr_801'
-        self.context.run_info.feed_frequency = '1m'
+        self.context.run_info.strategy_name = 'kdj5m-sr_801'
+        self.context.run_info.feed_frequency = '5m'
 
-        self.context.run_info.start_date = '2017-01-01'
+        self.context.run_info.start_date = '2017-07-26'
         self.context.run_info.end_date = '2017-09-28'
         self.context.run_info.ip = localip
-        self.context.run_info.main_contract = True
+        self.context.run_info.main_contract = False
 
         self.context.init_cash = 1000000
-
 
         self.context.cash = 1000000  # 初始资金
         self.context.cash_rate = 0.8  # 资金利用率
@@ -40,8 +39,8 @@ class KdjStrategy(StrategyCompareDay):
         self.context.open_price = 0
         self.context.max_dev = 0
 
-        self.context.k1 = 47
-        self.context.d1 = 53
+        self.context.k1 = 53
+        self.context.d1 = 47
         self.context.cyclenum = 13
 
         self.context.kdj = KDJ(k1=self.context.k1, d1=self.context.d1, cyclenum=self.context.cyclenum)
@@ -78,14 +77,14 @@ class KdjStrategy(StrategyCompareDay):
         kdj = self.context.kdj.compute(data,self.context.k1,self.context.d1)
 
         if kdj is not None:
-            print(kdj.k1, kdj.d1, kdj.k2, kdj.d2, kdj.j2)
+            # print(kdj.k1, kdj.d1, kdj.k2, kdj.d2, kdj.j2)
             if kdj.k1 > kdj.d1 and kdj.k2 < kdj.d2:
                 print('signal1', self.context.direction)
                 if self.context.direction == 'short':
                     self.order(self.context.current_contract[0], BUY, CLOSE_T, self.context.open_vol,
                                limit_price=data.close)
                 elif self.context.direction == 'none':
-                    open_vol = int((self.context.cash * self.context.cash_rate) / (data.close * self.context.instmt_info['broker_margin'] * 0.01 * self.context.instmt_info['contract_size']))
+                    open_vol = int((self.context.portfolio.avail_cash * self.context.cash_rate) / (data.close * self.context.instmt_info['broker_margin'] * 0.01 * self.context.instmt_info['contract_size']))
                     print("手数", open_vol, "价格,", data.close)
                     self.order(self.context.current_contract[0], BUY, OPEN, open_vol,
                                limit_price=data.close)
@@ -97,7 +96,7 @@ class KdjStrategy(StrategyCompareDay):
                                limit_price=data.close)
 
                 elif self.context.direction == 'none':
-                    open_vol = int((self.context.cash * self.context.cash_rate) / (data.close * self.context.instmt_info['broker_margin'] * 0.01 * self.context.instmt_info['contract_size']))
+                    open_vol = int((self.context.portfolio.avail_cash * self.context.cash_rate) / (data.close * self.context.instmt_info['broker_margin'] * 0.01 * self.context.instmt_info['contract_size']))
                     print("手数", open_vol, "价格,", data.close)
                     self.order(self.context.current_contract[0], SELL, OPEN, open_vol,
                                limit_price=data.close)
