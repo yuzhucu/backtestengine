@@ -44,6 +44,7 @@ class KdjStrategy(BacktestStrategy):
         self.context.cyclenum = 13
 
         self.context.kdj = KDJ(k1=self.context.k1, d1=self.context.d1, cyclenum=self.context.cyclenum)
+        self.context.kdjls = []
 
     def order_change(self, order):
         print('update unit %s:' % datetime.datetime.now(), 5)
@@ -75,9 +76,16 @@ class KdjStrategy(BacktestStrategy):
 
     def handle_data(self, data):
         kdj = self.context.kdj.compute(data,self.context.k1,self.context.d1)
+        if kdj is None:
+            # print(self.context.k1)
+            kdj1 = KDJOut(self.context.k1,self.context.d1,0,0,0)
+            self.context.kdjls.append(kdj1)
+            # print(self.context.kdjls[-1].__dict__)
+            # print('none')
 
         if kdj is not None:
             # print(kdj.k1, kdj.d1, kdj.k2, kdj.d2, kdj.j2)
+            self.context.kdjls.append(kdj)
             if kdj.k1 > kdj.d1 and kdj.k2 < kdj.d2:
                 print('signal1', self.context.direction)
                 if self.context.direction == 'short':
@@ -108,6 +116,7 @@ class KdjStrategy(BacktestStrategy):
 if __name__ == '__main__':
     t = KdjStrategy()
     t.run()
+
 
 
 

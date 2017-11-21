@@ -75,6 +75,7 @@ class BacktestStrategy(object):
             date = self.context.datelist.__next__()
             self.context.date = date
             print('日期:%d' %date)
+            print(self.context.portfolio.avail_cash)
             self.context.current_contract = self.context.universe
             # print(self.context.run_info.main_contract)
             if self.context.run_info.main_contract:
@@ -274,9 +275,10 @@ class BacktestStrategy(object):
     def _handle_dayend(self,event={}):
         self.context.portfolio.dayend_summary(date=self.context.date,
                                               settlement_price=self.context.settlement_price)
-        print(self.context.date)
+        # print(self.context.date)
         self.context.portfolio.combine_portfolio_dayend()
-        print(self.context.date)
+        print(self.context.portfolio.positions)
+        # print(self.context.date)
         event = Event(EVENT_NEXT_DAY)
         self._engine.sendEvent(event)
 
@@ -284,6 +286,7 @@ class BacktestStrategy(object):
     def _handle_output(self, event={}):
         self.context.portfolio.stats.nv = np.array(self.context.portfolio.netvalue)
         self.context.portfolio.stats.datetime = self.context.portfolio.datetime
+        self.context.portfolio.stats.kdj = self.context.kdjls
         # print(self.context.portfolio.stats.nv)
         self.context.portfolio.stats.output()
 

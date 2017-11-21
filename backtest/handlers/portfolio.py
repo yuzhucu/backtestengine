@@ -69,7 +69,7 @@ class Portfolio(object):
         print('before dayend')
         print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' % (
         self.upnl, self.marginreq, self.avail_cash, self.dailycomm, self.totalcomm, self.riskratio))
-        # print(settlement_price)
+        print('settlement price:', settlement_price)
         self._update_upnl(settlement_price)
         self.upnl = self._sum_upnl()
 
@@ -85,11 +85,12 @@ class Portfolio(object):
         dayend.cash = self.pre_balance + self.dailypnl - self.dailycomm + self.upnl - self.marginreq
         dayend.riskratio = (self.marginreq)/(self.pre_balance + self.dailypnl - self.dailycomm + self.upnl)
 
+        print(dayend.__dict__)
+
         # print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' % (
         # self.upnl, self.marginreq, self.avail_cash, self.dailycomm, self.totalcomm, self.riskratio))
 
         self.stats.dailysummary.append(dayend)
-
 
         self.avail_cash = dayend.cash
         self.riskratio = dayend.riskratio
@@ -99,6 +100,7 @@ class Portfolio(object):
         self.dailypnl = 0
         self.totalcomm += self.dailycomm
         self.dailycomm = 0
+
         print('after dayend')
         print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' % (
         self.upnl, self.marginreq, self.avail_cash, self.dailycomm, self.totalcomm, self.riskratio))
@@ -113,7 +115,7 @@ class Portfolio(object):
     #     self.init_cash += cash
     #     self.total_value += cash
 
-    def _open_position(self, symbol, direction, vol, price, marginratio, commission, time='9999', date=9999,info={}):
+    def _open_position(self, symbol, direction, vol, price, marginratio, commission, time='9999', date=9999,info=''):
         comm_this_trans = 0
         if symbol in self.positions:  # 持仓中已有该合约
             print('持仓中已有该合约')
@@ -251,7 +253,7 @@ class Portfolio(object):
                         comm_this_trans = vol * price * commission
                     elif self.positions[symbol].info['commission_type'] == 'vol':
                         comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
-                    self.avail_cash += self.positions[symbol].long_t.marginratio * price * vol + comm_this_trans
+                    self.avail_cash += self.positions[symbol].long_t.init_marginreq + pnl_this_trans + comm_this_trans
                     # print(self.positions[symbol].long_t.upnl, self.positions[symbol].long_y.upnl,
                     #       self.positions[symbol].short_t.upnl, self.positions[symbol].short_y.upnl)
                     self.positions[symbol].long_t.close_position(vol=vol)
@@ -275,7 +277,7 @@ class Portfolio(object):
                         comm_this_trans = vol * price * commission
                     elif self.positions[symbol].info['commission_type'] == 'vol':
                         comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
-                    self.avail_cash += self.positions[symbol].short_t.marginratio * price * vol + comm_this_trans
+                    self.avail_cash += self.positions[symbol].short_t.init_marginreq + pnl_this_trans + comm_this_trans
                     self.positions[symbol].short_t.close_position(vol=vol)
                     self.positions[symbol].update_value(price)
                     self.marginreq = self._sum_marginreq()
@@ -303,7 +305,7 @@ class Portfolio(object):
                         comm_this_trans = vol * price * commission
                     elif self.positions[symbol].info['commission_type'] == 'vol':
                         comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
-                    self.avail_cash += self.positions[symbol].long_y.marginratio * price * vol + comm_this_trans
+                    self.avail_cash += self.positions[symbol].long_y.init_marginreq + pnl_this_trans + comm_this_trans
                     self.positions[symbol].long_y.close_position(vol=vol)
                     self.positions[symbol].update_value(price)
                     self.marginreq = self._sum_marginreq()
@@ -323,7 +325,7 @@ class Portfolio(object):
                         comm_this_trans = vol * price * commission
                     elif self.positions[symbol].info['commission_type'] == 'vol':
                         comm_this_trans = vol / self.positions[symbol].info['contract_size'] * commission
-                    self.avail_cash += self.positions[symbol].short_y.marginratio * price * vol + comm_this_trans
+                    self.avail_cash += self.positions[symbol].short_y.init_marginreq + pnl_this_trans + comm_this_trans
                     self.positions[symbol].short_y.close_position(vol=vol)
                     self.positions[symbol].update_value(price)
                     self.marginreq = self._sum_marginreq()
@@ -360,7 +362,8 @@ class Portfolio(object):
     def modify_position(self, symbol, direction, offset, vol, price, marginratio=0, comm_t=0, comm_y=0, comm_o=0, time ='9999', date=9999, exch_code='',info={},type='',max_dev=0):
         print('modify direction:%s offset:%s vol:%d price:%d date:%d time:%s now:%s' % (direction, offset, vol, price, date, time, datetime.datetime.now()))
         print("comm", comm_o,comm_t,comm_y)
-        print('modify portfolio %s:' % datetime.datetime.now(),4)
+        print('available cash:', self.avail_cash)
+        print('modify portfolio %s:' % datetime.datetime.now(), 4)
         # print('before trade')
         # print(self.positions[symbol].long_t.upnl,self.positions[symbol].long_y.upnl,self.positions[symbol].short_t.upnl,self.positions[symbol].short_y.upnl)
         # print(exch_code)

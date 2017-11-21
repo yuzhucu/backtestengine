@@ -64,3 +64,4 @@ class DailySummary(object):
         self.pnl = 0
         self.riskratio = 0
 
+

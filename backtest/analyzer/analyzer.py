@@ -16,6 +16,7 @@ class Stats(object):
         self.transactions = []
         self.dailysummary = []
         self.tradecount = 0
+        self.kdj = []
 
 
     def maxdd(self):
@@ -146,6 +147,7 @@ class Stats(object):
             transdetail = outputwb.add_sheet('transactions')
             dailysummary = outputwb.add_sheet('daily_summary')
             netvalue = outputwb.add_sheet('net_value')
+            kdj = outputwb.add_sheet('kdj')
 
             overview.write(0, 0, 'true_return')
             overview.write(0, 1, self.returns(ret_type=ret_type, freq='def'))
@@ -217,6 +219,22 @@ class Stats(object):
             for i in range(0,len(self.datetime)):
                 netvalue.write(i+1,0,self.datetime[i])
                 netvalue.write(i+1,1,self.nv[i])
+
+
+            kdj.write(0, 0,'time')
+            kdj.write(0, 1, 'k1')
+            kdj.write(0, 2, 'k2')
+            kdj.write(0, 3, 'd1')
+            kdj.write(0, 4, 'd2')
+            kdj.write(0, 5, 'j1')
+
+            for i in range(0,len(self.datetime)):
+                kdj.write(i+1,0,self.datetime[i])
+                kdj.write(i+1,1,self.kdj[i].k1)
+                kdj.write(i + 1, 2, self.kdj[i].k2)
+                kdj.write(i + 1, 3, self.kdj[i].d1)
+                kdj.write(i + 1, 4, self.kdj[i].d2)
+                kdj.write(i + 1, 5, self.kdj[i].j2)
 
 
             outputwb.save('backtest-'+str(self.dates[0])+'-'+str(self.dates[-1])+'-'+self.backtestid+'.xls')

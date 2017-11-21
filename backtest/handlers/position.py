@@ -26,7 +26,8 @@ class BasePosition(object):
         self.price = init_price  # latest price
         self.value = self.price * self.vol  # latest value
         self.marginratio = marginratio  # latest margin ratio
-        self.marginreq = self.value * self.marginratio  # latest margin requirement
+        self.init_marginreq = self.value * self.marginratio  # init margin requirement
+        self.marginreq = self.init_marginreq  # latest margin requirement
         self.upnl = (self.value - self.cost) if self.direction == 'long' else (self.cost - self.value)  # unrealized gain/loss
         self.upnl_dayend = 0
 
@@ -75,6 +76,7 @@ class BasePosition(object):
         self.cost += vol * price
         self.avg_cost_per_unit = self.cost/self.vol
         self.value = self.price * self.vol
+        self.init_marginreq += vol*price*self.marginratio
         # print('after add')
         # print(self.vol,self.price,self.vol,self.marginreq,self.cost,self.avg_cost_per_unit,self.upnl)
 
@@ -101,6 +103,7 @@ class Position(object):
         self.avg_cost_long = 0
         self.avg_cost_short = 0
         self.value = 0
+        self.init_marginreq = 0
         self.marginreq = 0
         self.marginratio = 0
         self.upnl = 0
@@ -121,6 +124,7 @@ class Position(object):
         self.short_y.update_value(price)
         self.price = price
         self.value = self.long_t.value+self.short_t.value+self.long_y.value+self.short_y.value
+        self.init_marginreq = self.long_t.init_marginreq +self.short_t.init_marginreq+self.long_y.init_marginreq+self.short_y.init_marginreq
         self.marginreq = self.long_t.marginreq+self.short_t.marginreq+self.long_y.marginreq+self.short_y.marginreq
         self.upnl = self.long_t.upnl+self.short_t.upnl+self.long_y.upnl+self.short_y.upnl
         # print('afterupdate')
