@@ -41,6 +41,7 @@ class BacktestContext(object):
         self.universe = []
         self.current_contract = []
         self.max_dev = 0
+        self.open_switch = True
 
 
 class RunInfo(object):

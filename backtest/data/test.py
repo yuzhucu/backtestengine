@@ -89,16 +89,16 @@ from backtest.tools.tools import *
 #
 # print(b)
 
-# a = TradeDataMongo(symbol='SR801', date=20170510).get_main_contract()
+# a = TradeDataMongo(symbol='rb1801', date=20170911).get_bar_data(freq='5m')
 # print(a)
-b = TradeDataMongo(symbol='l1710', date=20170426, column=['TradingDay','UpdateTime', 'LastPrice', 'Volume','levelNo','PreSettlementPrice']).get_bar_data(freq='30s')
+# b = TradeDataMongo(symbol='m1705', date=20170105, column=['TradeDate', 'UpdateTime', 'LastPrice', 'Volume', 'levelNo', 'PreSettlementPrice']).get_settlement_price()
 # # #
-# # df = pd.DataFrame(list(a))
+# df = pd.DataFrame(list(a))
 # # #
-df1 = pd.DataFrame(list(b))
+# df1 = pd.DataFrame(list(b))
 # print(b)
 # print(df)
-print(df1)
+# print(b)
 # #
 #
 # # a = np.array([1000])
@@ -116,3 +116,9 @@ print(df1)
 # # print(pd.DataFrame(list(b)))
 # # a = GetTradeDates().get_date_list(start=20170101,end=20170128)
 # print(a)
+
+i = 0
+while True:
+    a = TradeDataMongo(symbol='rb1801', date=20170911, ip=localip).get_bar_data(freq='5m')
+    i+=1
+    print(i)

@@ -86,22 +86,28 @@ class Stats(object):
 
     def sharpe(self, ret_type='log', freq='annual'):
         if ret_type == 'simple':
-            if freq == 'annual':
-                return ((self.__ret() / len(self.nv)) * 252) / self.__voli() * math.sqrt(252)
-            elif freq == 'month':
-                return ((self.__ret() / len(self.nv)) * 21) / self.__voli() * math.sqrt(21)
+            if self.__voli() == 0:
+                return 0
             else:
-                print('please type in correct time frequency')
-                raise ValueError
+                if freq == 'annual':
+                    return ((self.__ret() / len(self.nv)) * 252) / self.__voli() * math.sqrt(252)
+                elif freq == 'month':
+                    return ((self.__ret() / len(self.nv)) * 21) / self.__voli() * math.sqrt(21)
+                else:
+                    print('please type in correct time frequency')
+                    raise ValueError
 
         elif ret_type == 'log':
-            if freq == 'annual':
-                return ((self.__logret() / len(self.nv)) * 252) / self.__logvoli() * math.sqrt(252)
-            elif freq == 'month':
-                return ((self.__logret() / len(self.nv)) * 21) / self.__logvoli() * math.sqrt(21)
+            if self.__logvoli() == 0:
+                return 0
             else:
-                print('please type in correct time frequency')
-                raise ValueError
+                if freq == 'annual':
+                    return ((self.__logret() / len(self.nv)) * 252) / self.__logvoli() * math.sqrt(252)
+                elif freq == 'month':
+                    return ((self.__logret() / len(self.nv)) * 21) / self.__logvoli() * math.sqrt(21)
+                else:
+                    print('please type in correct time frequency')
+                    raise ValueError
 
         else:
             print('please type in correct return type')
@@ -147,7 +153,7 @@ class Stats(object):
             transdetail = outputwb.add_sheet('transactions')
             dailysummary = outputwb.add_sheet('daily_summary')
             netvalue = outputwb.add_sheet('net_value')
-            kdj = outputwb.add_sheet('kdj')
+            # kdj = outputwb.add_sheet('kdj')
 
             overview.write(0, 0, 'true_return')
             overview.write(0, 1, self.returns(ret_type=ret_type, freq='def'))
@@ -180,6 +186,7 @@ class Stats(object):
             transdetail.write(0, 6, 'volume')
             transdetail.write(0, 7, 'commission')
             transdetail.write(0, 8, 'realized gain/loss')
+            transdetail.write(0, 9, 'diff')
 
             for i in range(0, len(self.transactions)):
                 trans = self.transactions[i]
@@ -192,6 +199,7 @@ class Stats(object):
                 transdetail.write(i+1, 6, trans.vol)
                 transdetail.write(i+1, 7, trans.commission)
                 transdetail.write(i+1, 8, trans.pnl)
+                transdetail.write(i + 1, 9, trans.diff)
 
             dailysummary.write(0, 0, 'date')
             dailysummary.write(0, 1, 'total_equity')
@@ -221,20 +229,20 @@ class Stats(object):
                 netvalue.write(i+1,1,self.nv[i])
 
 
-            kdj.write(0, 0,'time')
-            kdj.write(0, 1, 'k1')
-            kdj.write(0, 2, 'k2')
-            kdj.write(0, 3, 'd1')
-            kdj.write(0, 4, 'd2')
-            kdj.write(0, 5, 'j1')
-
-            for i in range(0,len(self.datetime)):
-                kdj.write(i+1,0,self.datetime[i])
-                kdj.write(i+1,1,self.kdj[i].k1)
-                kdj.write(i + 1, 2, self.kdj[i].k2)
-                kdj.write(i + 1, 3, self.kdj[i].d1)
-                kdj.write(i + 1, 4, self.kdj[i].d2)
-                kdj.write(i + 1, 5, self.kdj[i].j2)
+            # kdj.write(0, 0,'time')
+            # kdj.write(0, 1, 'k1')
+            # kdj.write(0, 2, 'k2')
+            # kdj.write(0, 3, 'd1')
+            # kdj.write(0, 4, 'd2')
+            # kdj.write(0, 5, 'j1')
+            #
+            # for i in range(0,len(self.datetime)):
+            #     kdj.write(i+1,0,self.datetime[i])
+            #     kdj.write(i+1,1,self.kdj[i].k1)
+            #     kdj.write(i + 1, 2, self.kdj[i].k2)
+            #     kdj.write(i + 1, 3, self.kdj[i].d1)
+            #     kdj.write(i + 1, 4, self.kdj[i].d2)
+            #     kdj.write(i + 1, 5, self.kdj[i].j2)
 
 
             outputwb.save('backtest-'+str(self.dates[0])+'-'+str(self.dates[-1])+'-'+self.backtestid+'.xls')

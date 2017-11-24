@@ -18,8 +18,8 @@ from datetime import datetime as dtL
 class BollStrategyReverse(BacktestStrategy):
     def initialize(self):
         self.context.universe = ['SR801']
-        self.context.run_info.strategy_name = 'bollReverse15m-sr_main'
-        self.context.run_info.feed_frequency = '15m'
+        self.context.run_info.strategy_name = 'bollReversePro30s-sr_main'
+        self.context.run_info.feed_frequency = '30s'
 
         self.context.run_info.start_date = '2017-09-01'
         self.context.run_info.end_date = '2017-09-28'
@@ -41,7 +41,8 @@ class BollStrategyReverse(BacktestStrategy):
         self.context.close_count = 0  # 平仓计数器
         self.context.open_price = 0
         self.context.max_dev = 0
-
+        self.context.hold_flag = False
+        self.context.temp_price = 0
 
     # def order_change(self,order):
     #     print('时间:%s 报单变化 %s' % (datetime.now(), order))
@@ -96,6 +97,14 @@ class BollStrategyReverse(BacktestStrategy):
                     self.context.direction = SELL
                     print('change to sell')
 
+            if self.context.hold_flag:
+                if data.close >= data.open and self.context.direction == SELL:
+                    self._close_hold(data)
+                elif data.close <= data.open and self.context.direction == BUY:
+                    self._close_hold(data)
+                else:
+                    pass
+
             if self.context.open_flag and self.context.direction == BUY:
                 cur_dev = self.context.open_price - data.low
                 max_dev = self.context.max_dev
@@ -107,19 +116,19 @@ class BollStrategyReverse(BacktestStrategy):
                 self.context.max_dev = max(cur_dev, max_dev)
 
             # 突破上轨后跌破中轨多单
-            if data.close < boll.mb and self.context.direction == BUY and self.context.can_open_flag:
+            if data.close < boll.mb and self.context.direction == BUY and self.context.can_open_flag and not self.context.hold_flag:
                 self._open(data)
 
             # 突破下轨后涨破中轨开空单
-            if data.close > boll.mb and self.context.direction == SELL and self.context.can_open_flag:
+            if data.close > boll.mb and self.context.direction == SELL and self.context.can_open_flag and not self.context.hold_flag:
                 self._open(data)
 
             # 开过多单后 收盘价超过中轨 平仓计数器 + 1 超过3次平仓
-            if data.close > boll.mb and self.context.direction == BUY and self.context.open_flag:
+            if data.close > boll.mb and self.context.direction == BUY and self.context.open_flag and not self.context.hold_flag:
                 self._close(data)
 
             # 开过空单后 收盘价跌破中轨 平仓计数器 + 1 超过3次平仓
-            if data.close < boll.mb and self.context.direction == SELL and self.context.open_flag:
+            if data.close < boll.mb and self.context.direction == SELL and self.context.open_flag and not self.context.hold_flag:
                 self._close(data)
 
             # if data.close < (self.context.open_price - 15 * self.context.instmt_info['tick_size']) and self.context.direction == BUY and self.context.open_flag:
@@ -160,25 +169,52 @@ class BollStrategyReverse(BacktestStrategy):
         self.context.close_count += 1
 
         if self.context.close_count >= 3:
-            # 平空
-            open_price = bar.close + self.context.slippage
-            direction = BUY
-            if self.context.direction == BUY:
-                # 平多
-                open_price = bar.close - self.context.slippage
-                direction = SELL
+            if bar.close >= self.context.open_price and bar.close >= bar.open and self.context.direction == BUY:
+                self.context.hold_flag = True
+                self.context.temp_price = bar.close
+            elif bar.close <= self.context.open_price and bar.close <= bar.open and self.context.direction == SELL:
+                self.context.hold_flag = True
+                self.context.temp_price = bar.close
+            else:
+                open_price = bar.close + self.context.slippage
+                direction = BUY
+                if self.context.direction == BUY:
+                    # 平多
+                    open_price = bar.close - self.context.slippage
+                    direction = SELL
 
-            if self.context.open_vol > 0:
-                # print('时间:%s 平今:%s 手' % (datetime.now(), self.context.open_vol))
-                print('时间:%d %s 平:%s 手' % (self.context.date, self.context.current_bar.end_time, self.context.open_vol))
-                self.order(self.context.current_contract[0], direction, CLOSE, self.context.open_vol, limit_price=open_price)
-                self.context.can_open_flag = True
-                self.context.open_flag = False
-                self.context.close_count = 0
-            # else:
-                # 平光了又能开仓了
-                # self.context.can_open_flag = True
-                # self.context.close_count = 0
+                if self.context.open_vol > 0:
+                    # print('时间:%s 平今:%s 手' % (datetime.now(), self.context.open_vol))
+                    print('时间:%d %s 平:%s 手' % (self.context.date, self.context.current_bar.end_time, self.context.open_vol))
+                    self.order(self.context.current_contract[0], direction, CLOSE, self.context.open_vol, limit_price=open_price)
+                    self.context.can_open_flag = True
+                    self.context.open_flag = False
+                    self.context.close_count = 0
+                # else:
+                    # 平光了又能开仓了
+                    # self.context.can_open_flag = True
+                    # self.context.close_count = 0
+
+    def _close_hold(self,bar):
+        open_price = bar.close + self.context.slippage
+        direction = BUY
+        diff_this_trans = (self.context.temp_price - bar.close) * self.context.open_vol*self.context.instmt_info['contract_size']
+        if self.context.direction == BUY:
+            # 平多
+            open_price = bar.close - self.context.slippage
+            direction = SELL
+            diff_this_trans = (bar.close-self.context.temp_price) * self.context.open_vol * self.context.instmt_info[
+                'contract_size']
+        print('diff',diff_this_trans)
+        if self.context.open_vol > 0:
+            # print('时间:%s 平今:%s 手' % (datetime.now(), self.context.open_vol))
+            print('时间:%d %s 平:%s 手' % (self.context.date, self.context.current_bar.end_time, self.context.open_vol))
+            self.order(self.context.current_contract[0], direction, CLOSE, self.context.open_vol,
+                       limit_price=open_price, diff = diff_this_trans)
+            self.context.can_open_flag = True
+            self.context.open_flag = False
+            self.context.hold_flag = False
+            self.context.close_count = 0
 
 
 if __name__ == '__main__':

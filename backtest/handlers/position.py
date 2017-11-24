@@ -110,6 +110,8 @@ class Position(object):
         self.pnl = 0
         self.info = info
         # self.type = 'closed' if self.vol == 0 else 'open'
+    def get_position_vol(self):
+        return self.long_t.vol+self.short_t.vol+self.long_y.vol+self.short_y.vol
 
     def get_margin_req(self):
         # print(self.long_t.value,self.short_t.marginreq,self.long_y.marginreq,self.short_y.marginreq)

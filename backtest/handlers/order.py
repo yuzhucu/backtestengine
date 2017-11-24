@@ -38,7 +38,7 @@ class Transaction(object):
         self.pnl = 0
 
 class TransactionRecord(object):
-    def __init__(self, symbol, direction, offset, vol, deal_price, commission, transtime, date, pnl, type = '', max_dev = 0):
+    def __init__(self, symbol, direction, offset, vol, deal_price, commission, transtime, date, pnl, type = '', max_dev = 0,diff = 0):
         self.symbol = symbol
         self.date = date
         self.time = transtime
@@ -50,6 +50,7 @@ class TransactionRecord(object):
         self.pnl = pnl
         self.type = type
         self.max_dev = max_dev
+        self.diff = diff
 
 class DailySummary(object):
     def __init__(self):
