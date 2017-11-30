@@ -1,14 +1,12 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 
+'''
+author:       sj
+contact:      songjie1217@hotmail.com
+description:
+'''
 
-"""
-@version: python3.6
-@author: ‘sj‘
-@contact: songjie1217@hotmail.com
-@file: boll-stoploss.py
-@time: 11/6/17 1:59 PM
-"""
-
+__author__ = 'sj'
 
 from backtest.core.backteststrategy import *
 from backtest.optimizer.optimizer import *
@@ -21,8 +19,8 @@ class BollStrategyReverse(BacktestStrategy):
         self.context.run_info.strategy_name = 'bollReversePro30s-sr_main'
         self.context.run_info.feed_frequency = '30s'
 
-        self.context.run_info.start_date = '2017-04-01'
-        self.context.run_info.end_date = '2017-04-10'
+        self.context.run_info.start_date = '2017-09-01'
+        self.context.run_info.end_date = '2017-09-28'
         self.context.run_info.ip = localip
         self.context.run_info.main_contract = True
 
@@ -44,22 +42,6 @@ class BollStrategyReverse(BacktestStrategy):
         self.context.hold_flag = False
         self.context.temp_price = 0
 
-    # def order_change(self,order):
-    #     print('时间:%s 报单变化 %s' % (datetime.now(), order))
-    #     if order['status'] == 'AllTraded':
-    #         if order['offset'] == '0':  # 开
-    #             self.context.open_vol += order['vol']
-    #         elif order['offset'] == '3':  # 平今
-    #             self.context.open_vol -= order['vol']
-    #
-    #     print('时间:%s 当前开仓手数: %d ' % (datetime.now(), self.context.open_vol))
-    #
-    #     # 成交量> 0 开仓, 成交量 =0 未开仓
-    #     if self.context.open_vol > 0:
-    #         self.context.open_flag = True
-    #     else:
-    #         self.context.open_flag = False
-    #         self.context.direction = ''
 
     def order_change(self,order):
         print('update unit %s:' % datetime.datetime.now(),5)

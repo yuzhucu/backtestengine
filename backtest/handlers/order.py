@@ -23,6 +23,8 @@ class Order(object):
         self.stop_type = 'immediately'
         self.status = 0
         self.slippage = 0
+        self.type = ''
+
 
 
 class Transaction(object):

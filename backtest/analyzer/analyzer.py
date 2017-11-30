@@ -150,7 +150,7 @@ class Stats(object):
 
     def output(self, ret_type='simple', voli_freq='annual', sharpe_freq='annual', output_type='excel'):
         if output_type == 'excel':
-            filename = 'jmmbacktest-'+str(self.dates[0])+'-'+str(self.dates[-1])+'-'+self.backtestid+'.xls'
+            filename = 'backtest-'+str(self.dates[0])+'-'+str(self.dates[-1])+'-'+self.backtestid+'.xls'
             outputwb = xlsxwriter.Workbook(filename)
             overview = outputwb.add_worksheet('overview')
             transdetail = outputwb.add_worksheet('transactions')

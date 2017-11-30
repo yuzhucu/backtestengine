@@ -22,7 +22,7 @@ import pandas as pd
 
 class TradeDataMongo(object):
 
-    def __init__(self, symbol, date, column=miniclms, ip=remoteip):
+    def __init__(self, symbol, date, column=miniclms, ip=localip):
         self.symbol = symbol
         self.date = date
         self.column = column
@@ -62,7 +62,7 @@ class TradeDataMongo(object):
         return list(contract)[0]['InstrumentID']
 
 class InstmtInfoMongo(object):
-    def __init__(self, symbol, ip=remoteip):
+    def __init__(self, symbol, ip=localip):
         self.symbol = symbol
         self.code = instidtoprodid(symbol).lower()
         self.ip = ip
@@ -121,7 +121,7 @@ class GetDataCSV(object):
         pass
 
 class GetTradeDates(object):
-    def __init__(self, ip=remoteip):
+    def __init__(self, ip=localip):
         self.ip = ip
         self.db = pymongo.MongoClient(self.ip, port).futures['trade_date']
 
@@ -161,5 +161,3 @@ class GetTradeDates(object):
     # return list(data[-1])
 
 #
-# a = TradeDataMongo('cs1801',20170103).get_settlement_price()
-# print(a)
