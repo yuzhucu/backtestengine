@@ -1,0 +1,74 @@
+import math
+
+K1 = 53
+D1 = 47
+s1= "I1801"
+cycleNum= 17
+ 
+def init(context):
+    context.s1 = "I1801"
+    subscribe(context.s1)
+    context.number =17
+    
+# before_trading此函数会在每天交易开始前被调用，当天只会被调用一次
+def before_trading(context):
+    pass
+def KDJ(a,b,K1,D1):
+    # 取得过去count天的最低价格
+    low_price = min(history_bars(s1,cycleNum,'1m','low'))
+    # 取得过去count天的最高价格
+    high_price = max(history_bars(s1,cycleNum,'1m','high'))
+    
+    # 取得当日收盘价格
+    h_close = history_bars(s1,cycleNum,'1m','close')
+    current_close = h_close[-1]
+    if high_price!=low_price:
+        #计算未成熟随机值RSV(n)＝（Ct－Ln）/（Hn-Ln）×100
+        RSV = 100*(current_close-low_price)/(high_price-low_price)
+    else:
+        RSV = 50
+    #当日K值=(1-a)×前一日K值+a×当日RSV
+    K2=(1-a)*K1+a*RSV
+    #当日D值=(1-a)×前一日D值+a×当日K值
+    D2=(1-b)*D1+b*K2
+    #计算J值
+    J2 = 3*K2-2*D2
+    return K1,D1,K2,D2,J2
+
+# 你选择的证券的数据更新将会触发此段逻辑，例如日或分钟历史数据切片或者是实时数据切片更新
+def handle_bar(context, bar_dict):
+    # 开始编写你的主要的算法逻辑
+       #设定KDJ基期值
+    #设定k、d平滑因子a、b，不过目前已经约定俗成，固定为1/3
+    a = 1.0/3
+    b = 1.0/3
+    global K1,D1
+    h_close = history_bars(context.s1,context.number,'1m','close')
+    R = context.portfolio.positions[context.s1].pnl
+    buy_qty = context.portfolio.positions[context.s1].buy_quantity  
+    sell_qty = context.portfolio.positions[context.s1].sell_quantity
+    allmoney = context.portfolio.total_value  # 所有资金
+    print("总资金",allmoney)
+    if not math.isnan(h_close[0]): 
+        K1,D1,K2,D2,J2 = KDJ(a,b,K1,D1)
+        print("k1:",K1,",d1:",D1,",k2:",K2,",d2:",D2)
+    	#k线由右边向下交叉d值时做卖，k线由右边向上交叉d值做买
+        if  K1 > D1 and K2 < D2:
+            if sell_qty > 0:
+              buy_close(context.s1,sell_qty)
+            elif buy_qty == 0:
+             shoushu = int(0.8*(allmoney /(100*h_close[0]*0.2)))
+             print("手数",shoushu,"价格,",h_close[0])
+             buy_open(context.s1,float(shoushu))
+             shoushu = 0
+        elif K1< D1 and K2>D2:
+            if buy_qty > 0:
+              sell_close(context.s1, buy_qty)
+            elif sell_qty==0: 
+              shoushu = int(0.8*(allmoney /(100*h_close[0]*0.2)))
+              print("手数",shoushu,"价格,",h_close[0])
+              sell_open(context.s1,float(shoushu))
+              shoushu = 0
+            
+        K1 = K2
+        D1 = D2

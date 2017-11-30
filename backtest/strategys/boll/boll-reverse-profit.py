@@ -21,7 +21,7 @@ class BollStrategyReverse(BacktestStrategy):
         self.context.run_info.strategy_name = 'bollReversePro30s-sr_main'
         self.context.run_info.feed_frequency = '30s'
 
-        self.context.run_info.start_date = '2017-09-01'
+        self.context.run_info.start_date = '2017-09-20'
         self.context.run_info.end_date = '2017-09-28'
         self.context.run_info.ip = localip
         self.context.run_info.main_contract = True

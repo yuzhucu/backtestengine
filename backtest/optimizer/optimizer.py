@@ -340,6 +340,7 @@ class StrategyCompareDay(object):
         dayend.write(0, 7, 'total_commission')
         dayend.write(0, 8, 'trade_count')
         dayend.write(0, 9, 'net_profit')
+
         dayend.write(1, 11, 'average_profit')
         dayend.write(2, 11, 'std_profit')
         dayend.write(3, 11, 'days_total')

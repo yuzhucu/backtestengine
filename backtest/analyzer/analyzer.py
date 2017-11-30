@@ -4,6 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import pylab as pl
 import xlwt
+import xlsxwriter
 import datetime
 from backtest.analyzer.output_config import *
 
@@ -117,18 +118,19 @@ class Stats(object):
         total_commission = 0
         for trans in self.transactions:
             total_commission += trans.commission
+            return total_commission
 
     def winratio(self):
-        win = 0
-        lose = 0
+        wins = 0
+        loses = 0
         for trans in self.transactions:
             if trans.pnl > 0:
-                win += 1
+                wins += 1
             elif trans.pnl < 0:
-                lose += 1
+                loses += 1
             else:
                 pass
-        return win
+        return wins/(wins+loses)
 
     def ptolratio(self):
         profit = 0
@@ -140,7 +142,7 @@ class Stats(object):
                 loss += trans.pnl
             else:
                 pass
-        return profit
+        return profit/loss
 
     def nvplot(self):
         pl.plot(self.dates,self.nv)
@@ -148,11 +150,12 @@ class Stats(object):
 
     def output(self, ret_type='simple', voli_freq='annual', sharpe_freq='annual', output_type='excel'):
         if output_type == 'excel':
-            outputwb = xlwt.Workbook()
-            overview = outputwb.add_sheet('overview')
-            transdetail = outputwb.add_sheet('transactions')
-            dailysummary = outputwb.add_sheet('daily_summary')
-            netvalue = outputwb.add_sheet('net_value')
+            filename = 'jmmbacktest-'+str(self.dates[0])+'-'+str(self.dates[-1])+'-'+self.backtestid+'.xls'
+            outputwb = xlsxwriter.Workbook(filename)
+            overview = outputwb.add_worksheet('overview')
+            transdetail = outputwb.add_worksheet('transactions')
+            dailysummary = outputwb.add_worksheet('daily_summary')
+            netvalue = outputwb.add_worksheet('net_value')
             # kdj = outputwb.add_sheet('kdj')
 
             overview.write(0, 0, 'true_return')
@@ -210,7 +213,6 @@ class Stats(object):
             dailysummary.write(0, 6, 'daily_comm')
             dailysummary.write(0, 7, 'risk_ratio')
 
-
             for j in range(0, len(self.dates)):
                 daily = self.dailysummary[j]
                 dailysummary.write(j+1, 0, daily.date)
@@ -225,8 +227,8 @@ class Stats(object):
             netvalue.write(0, 0, 'time')
             netvalue.write(0, 1, 'net_value')
             for i in range(0,len(self.datetime)):
-                netvalue.write(i+1,0,self.datetime[i])
-                netvalue.write(i+1,1,self.nv[i])
+                netvalue.write(i+1, 0, self.datetime[i])
+                netvalue.write(i+1, 1, self.nv[i])
 
 
             # kdj.write(0, 0,'time')
@@ -245,7 +247,7 @@ class Stats(object):
             #     kdj.write(i + 1, 5, self.kdj[i].j2)
 
 
-            outputwb.save('backtest-'+str(self.dates[0])+'-'+str(self.dates[-1])+'-'+self.backtestid+'.xls')
+            outputwb.close()
 
     def __ret(self):
         ret = self.nv[-1]/self.nv[0] - 1
