@@ -189,7 +189,7 @@ class Stats(object):
             transdetail.write(0, 6, 'volume')
             transdetail.write(0, 7, 'commission')
             transdetail.write(0, 8, 'realized gain/loss')
-            transdetail.write(0, 9, 'diff')
+            transdetail.write(0, 9, 'type')
 
             for i in range(0, len(self.transactions)):
                 trans = self.transactions[i]
@@ -202,7 +202,7 @@ class Stats(object):
                 transdetail.write(i+1, 6, trans.vol)
                 transdetail.write(i+1, 7, trans.commission)
                 transdetail.write(i+1, 8, trans.pnl)
-                transdetail.write(i + 1, 9, trans.diff)
+                transdetail.write(i + 1, 9, trans.type)
 
             dailysummary.write(0, 0, 'date')
             dailysummary.write(0, 1, 'total_equity')

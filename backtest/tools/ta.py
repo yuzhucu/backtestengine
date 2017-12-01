@@ -133,7 +133,7 @@ class BlR(object):
 
 
 class Boll(object):
-    def __init__(self, cycle = 26, k=2):
+    def __init__(self, cycle = 30, k=2):
         self._cycle = cycle
         self._k = k
         self._close_prices=[]

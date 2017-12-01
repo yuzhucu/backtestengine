@@ -117,8 +117,14 @@ from backtest.tools.tools import *
 # # a = GetTradeDates().get_date_list(start=20170101,end=20170128)
 # print(a)
 
-i = 0
-while True:
-    a = TradeDataMongo(symbol='rb1801', date=20170911, ip=localip).get_bar_data(freq='5m')
-    i+=1
-    print(i)
+# i = 0
+# while True:
+#     a = TradeDataMongo(symbol='rb1801', date=20170911, ip=localip).get_bar_data(freq='5m')
+#     i+=1
+#     print(i)
+
+# a = TradeDataMongo(symbol='rb1801', date=20170911, ip=localip).get_settlement_price()
+
+a = TradeDataMongo('SR801',20170926,ip=localip).get_tick_data()
+
+print(list(a))

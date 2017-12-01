@@ -16,10 +16,13 @@ description:
 __author__ = 'sjsj'
 
 
+def __reverse_direction(direction):
+    if direction == 'long':
+        temp_d = 'short'
+    else:
+        temp_d = 'long'
+    return temp_d
 
 
-a = [1,1,1]
-b = [1,1,1]
-
-if a==b:
-    print(1)
+print(__reverse_direction('long'))
+print(__reverse_direction('short'))

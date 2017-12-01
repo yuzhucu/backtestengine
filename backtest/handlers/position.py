@@ -146,9 +146,9 @@ class Position(object):
         self._combine_position(self.short_y, self.short_t)
 
     def _combine_position(self, position1, position2):  # combine position 2 to position 1
-        print('beforecombine')
-        print(position1.symbol,position1.avg_cost_per_unit, position2.avg_cost_per_unit)
-        print(position1.vol, position1.cost, position1.upnl)
+        # print('beforecombine')
+        # print(position1.symbol,position1.avg_cost_per_unit, position2.avg_cost_per_unit)
+        # print(position1.vol, position1.cost, position1.upnl)
         position1.vol += position2.vol
         position1.cost += position2.cost
         position1.upnl += position2.upnl

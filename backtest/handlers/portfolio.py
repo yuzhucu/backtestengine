@@ -72,10 +72,10 @@ class Portfolio(object):
             self.positions[position].combine_position_dayend()
 
     def dayend_summary(self,date, settlement_price):
-        print('before dayend')
-        print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' % (
-        self.upnl, self.marginreq, self.avail_cash, self.dailycomm, self.totalcomm, self.riskratio))
-        print('settlement price:', settlement_price)
+        # print('before dayend')
+        # print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' % (
+        # self.upnl, self.marginreq, self.avail_cash, self.dailycomm, self.totalcomm, self.riskratio))
+        # print('settlement price:', settlement_price)
         self._update_upnl(settlement_price)
         self.upnl = self._sum_upnl()
 
@@ -107,9 +107,9 @@ class Portfolio(object):
         self.totalcomm += self.dailycomm
         self.dailycomm = 0
 
-        print('after dayend')
-        print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' % (
-        self.upnl, self.marginreq, self.avail_cash, self.dailycomm, self.totalcomm, self.riskratio))
+        # print('after dayend')
+        # print('upnl:%d mreq:%d cash:%d dcomm:%d tcomm:%d rration:%d' % (
+        # self.upnl, self.marginreq, self.avail_cash, self.dailycomm, self.totalcomm, self.riskratio))
 
         self._check_margin()
 
@@ -121,21 +121,21 @@ class Portfolio(object):
     #     self.init_cash += cash
     #     self.total_value += cash
 
-    def _open_position(self, symbol, direction, vol, price, marginratio, commission, time='9999', date=9999,info=''):
+    def _open_position(self, symbol, direction, vol, price, marginratio, commission, time='9999', date=9999,info='',type=''):
         comm_this_trans = 0
         if symbol in self.positions:  # 持仓中已有该合约
             print('持仓中已有该合约')
             raise ValueError
         else:
             self.positions[symbol] = Position(symbol,info)
-            # print('开仓', symbol, direction, vol, price, marginratio)
+            print('开仓', symbol, direction, vol, price, marginratio)
             if direction == 'long':
                 self.positions[symbol].long_t = BasePosition(symbol=symbol, direction=direction, init_vol=vol,
                                                            init_price=price, marginratio=marginratio)
             else:
                 self.positions[symbol].short_t = BasePosition(symbol=symbol, direction=direction, init_vol=vol,
                                                            init_price=price, marginratio=marginratio)
-            print(self.positions[symbol].info)
+            # print(self.positions[symbol].info)
             # print(self.positions[symbol].get_margin_req())
             # print('self.positions[symbol].upnl before update')
             # print(self.positions[symbol].upnl)
@@ -157,9 +157,9 @@ class Portfolio(object):
             if self.avail_cash < 0:
                 print('保证金不足，无法开仓')
                 raise ValueError
-            self.stats.transactions.append(TransactionRecord(symbol,direction,'open',vol,price,comm_this_trans,time,date,0))
+            self.stats.transactions.append(TransactionRecord(symbol,direction,'open',vol,price,comm_this_trans,time,date,0,type=type))
 
-    def _add_position(self, symbol, direction, vol, price, commission, time = '9999',date=9999):
+    def _add_position(self, symbol, direction, vol, price, commission, time = '9999',date=9999,type=''):
         comm_this_trans = 0
         if symbol not in self.positions:
             print ('持仓中无此合约')
@@ -240,7 +240,7 @@ class Portfolio(object):
 
             print("commthistrans", comm_this_trans)
             self.stats.transactions.append(
-                TransactionRecord(symbol, direction, 'open', vol, price, comm_this_trans, time, date, 0))
+                TransactionRecord(symbol, direction, 'open', vol, price, comm_this_trans, time, date, 0,type = type))
 
     def _close_position_t(self, symbol, direction, vol, price, commission =0, time='9999',date=9999,type='',max_dev = 0,diff = 0):  # 平今仓
         comm_this_trans = 0
@@ -391,18 +391,19 @@ class Portfolio(object):
 
     def modify_position(self, symbol, direction, offset, vol, price, marginratio=0, comm_t=0, comm_y=0, comm_o=0, time ='9999', date=9999, exch_code='',info={},type='',max_dev=0,diff=0):
         print('modify direction:%s offset:%s vol:%d price:%d date:%d time:%s now:%s' % (direction, offset, vol, price, date, time, datetime.datetime.now()))
-        print("comm", comm_o,comm_t,comm_y)
-        print('available cash:', self.avail_cash)
-        print('modify portfolio %s:' % datetime.datetime.now(), 4)
+        # print("comm", comm_o,comm_t,comm_y)
+        # print('available cash:', self.avail_cash)
+        # print('modify portfolio %s:' % datetime.datetime.now(), 4)
         # print('before trade')
         # print(self.positions[symbol].long_t.upnl,self.positions[symbol].long_y.upnl,self.positions[symbol].short_t.upnl,self.positions[symbol].short_y.upnl)
         # print(exch_code)
+
         self.tradecount += 1
         if offset == 'open':
             if symbol in self.positions:
-                self._add_position(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_o, time=time, date=date)
+                self._add_position(symbol=symbol, direction=direction, vol=vol, price=price, commission=comm_o, time=time, date=date,type = type)
             else: # open new position
-                self._open_position(symbol=symbol, direction=direction, vol=vol, price=price, marginratio=marginratio, commission=comm_o, time=time, date=date,info=info)
+                self._open_position(symbol=symbol, direction=direction, vol=vol, price=price, marginratio=marginratio, commission=comm_o, time=time, date=date,type = type,info=info)
 
         elif offset == 'close_t':
             if exch_code == 'CZCE' or exch_code == 'DCE':
@@ -439,8 +440,7 @@ class Portfolio(object):
                 raise ValueError
         else:
             pass
-        print('after trade')
-        print(self.positions[symbol].long_t.upnl, self.positions[symbol].long_y.upnl,
+        print('after trade positions: long_t,long_y,short_t,short_y',self.positions[symbol].long_t.upnl, self.positions[symbol].long_y.upnl,
               self.positions[symbol].short_t.upnl, self.positions[symbol].short_y.upnl)
 
     def _sum_upnl(self):

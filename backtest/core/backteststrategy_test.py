@@ -11,16 +11,19 @@ description:
 
 from backtest.eventengine.eventEngine import *
 from backtest.eventengine.eventType import *
-from backtest.core.context_test import *
+from backtest.core.context import *
 from backtest.data.getdata import *
 from backtest.data.datatype import *
 from backtest.data.datatools import *
 from backtest.handlers.position import *
 from backtest.handlers.portfolio import *
 from backtest.tools.tools import *
+from backtest.tools.ta import *
+import gc
+import sys
 
 
-class BacktestStrategy(object):
+class BacktestStrategyTest(object):
     def __init__(self):
         self._engine = EventEngine()
         self._engine.register(EVENT_ON_FEED, self._handle_data)  # 处理tick事件
@@ -79,23 +82,23 @@ class BacktestStrategy(object):
             print('getting main contract')
             if self.context.run_info.main_contract:
                 contract_temp = self.__get_main_contract(date=date, symbols=self.context.universe, ip=self.context.run_info.ip)
-                print('contract_temp',contract_temp)
-                print(self.context.current_contract,self.context.portfolio.get_vol())
+                # print('contract_temp',contract_temp)
+                print('current contracts:',self.context.current_contract,'voloume held:',self.context.portfolio.get_vol())
                 if contract_temp != self.context.current_contract and self.context.portfolio.get_vol() == 0:
                     self.context.current_contract = contract_temp
                     self.context.boll = Boll()
                     self.context.open_switch = True
-                    self.context.can_open_flag = True
+                    # self.context.can_open_flag = True
                     print('open switch to true')
                 if contract_temp != self.context.current_contract and self.context.portfolio.get_vol() != 0:
                     self.context.open_switch = False
                     print('open switch to false')
 
-            print(self.context.current_contract)
+            # print(self.context.current_contract)
             self.context.portfolio.stats.dates.append(date)
             print('getting settlement price')
-            self.context.settlement_price = TradeDataMongo(self.context.current_contract[0], date, column=columns,
-                                                           ip=self.context.run_info.ip).get_settlement_price() #get settlement price for daily summary
+            # self.context.settlement_price = TradeDataMongo(self.context.current_contract[0], date, column=columns,
+            #                                                ip=self.context.run_info.ip).get_settlement_price() #get settlement price for daily summary
             print('getting data')
             if len(self.context.universe) == 1:  # handle single instrument
                 if self.context.run_info.feed_frequency == 'tick':  # handle tick data
@@ -124,18 +127,18 @@ class BacktestStrategy(object):
 
     def _next_bar(self, event={}):  # handles bar feeds
         try:  # start bar interation within day
-            print('wait bar')
-            print(self.context.data_day)
+            # print('wait bar')
+            # print(self.context.data_day)
             row = self.context.data_day.next()
-            print(row)
+            # print(row)
             bar_obj = create_bar_obj(row)  # create bar object
-            print(self.context.date, bar_obj.end_time, bar_obj.close)
+            # print(self.context.date, bar_obj.end_time, bar_obj.close)
             self.context.current_bar = bar_obj  # save current bar to context
             event = Event(EVENT_ON_FEED)
             event.dict = bar_obj
-            print('update port')
+            # print('update port')
             self.context.portfolio.update_portfolio(event.dict.close,time=str(self.context.date)+' '+self.context.current_bar.end_time)  # update portfolio
-            print('update finish start calculate')
+            # print('update finish start calculate')
             self._engine.sendEvent(event)
         except StopIteration:  # when bar interation ends, start day end process
             event =Event(EVENT_DAY_END)
@@ -155,16 +158,16 @@ class BacktestStrategy(object):
             self._engine.sendEvent(event)
 
     def _handle_data(self, event):
-        print('start calculating signal')
+        # print('start calculating signal')
         self.handle_data(event.dict)
-        print('order flag', self.context.order_flag)
+        # print('order flag', self.context.order_flag)
         if not self.context.order_flag: # 若未产生交易，发送下一个数据
             if self.context.run_info.feed_frequency == 'tick':
                 event = Event(EVENT_NEXT_TICK)
                 self._engine.sendEvent(event)
             else:
                 event = Event(EVENT_NEXT_BAR)
-                print('no signal go to next bar')
+                # print('no signal go to next bar')
                 # sleep(0.1)
                 self._engine.sendEvent(event)
         else:  # if order_flag, order itself will send move on signal
@@ -184,7 +187,7 @@ class BacktestStrategy(object):
         :param contingent_condition:    触发条件 默认立即 可设置stop条件
         :return:
         '''
-        self.context.order_flag = True  # 更改order flag
+        # self.context.order_flag = True  # 更改order flag
         price_type = 'limit'
         if limit_price == 0:
             price_type = 'any'
@@ -202,20 +205,45 @@ class BacktestStrategy(object):
         order.slippage = 0
         order.type = type
 
-        if order['offset'] == OPEN and self.context.open_switch == False:
+        if order.offset == OPEN and self.context.open_switch == False:
             # event = Event(EVENT_NEXT_BAR)
-            print('next bar direct')
+            # print('next bar direct')
             self.context.order_flag = False
             # self.context.can_open_flag = True
-            print('change can open to true')
+            # print('change can open to true')
             # pass
         else:
-            event = Event(EVENT_ORDER)
-            event.dict = order
-            # print(self.context.current_data['endTime'])
-            # print(event.dict)
-            print("beforesend %s:" %datetime.datetime.now(),2)
-            self._engine.sendEvent(event)
+            if self.context.instmt_info['commission_type'] == 'vol':
+                comm_o = self.context.instmt_info['opening_fee_by_num']
+                comm_t = self.context.instmt_info['closing_today_fee_by_num']
+                comm_y = self.context.instmt_info['closing_fee_by_num']
+            else:
+                comm_o = self.context.instmt_info['opening_fee_by_value']
+                comm_t = self.context.instmt_info['closing_today_fee_by_value']
+                comm_y = self.context.instmt_info['closing_fee_by_value']
+
+            margin = self.context.instmt_info['broker_margin'] / 100
+            contract_size = self.context.instmt_info['contract_size']
+            exch_code = self.context.instmt_info['exch_code']
+            time = self.context.current_bar.end_time
+            date = self.context.date
+            # print('receive order %s:' %datetime.datetime.now(),3)
+            print('order:', order.symbol, order.direction, order.offset, order.vol, order.limit_price, order.type, date, time)
+            self.context.portfolio.modify_position(symbol=order.symbol, direction=order.direction, offset=order.offset,
+                                                   vol=order.vol * contract_size, price=order.limit_price,
+                                                   marginratio=margin, comm_o=comm_o, comm_t=comm_t, comm_y=comm_y,
+                                                   time=time, date=date, exch_code=exch_code,
+                                                   info=self.context.instmt_info, type=order.type)
+            print(
+                'after trade: curtime:%s, curprice:%.2f,total_value:%d, marginreq:%d, availcash:%d,upnl:%d,daypnl:%d,daycomm:%d,prebalance:%d' % (
+                    self.context.current_bar.end_time,
+                    self.context.current_bar.close,
+                    self.context.portfolio.total_value, self.context.portfolio.marginreq,
+                    self.context.portfolio.avail_cash, self.context.portfolio.upnl,
+                    self.context.portfolio.dailypnl,
+                    self.context.portfolio.dailycomm,
+                    self.context.portfolio.pre_balance))
+
 
     def _portfolio(self, event):
         order = event.dict
@@ -233,65 +261,14 @@ class BacktestStrategy(object):
         exch_code = self.context.instmt_info['exch_code']
         time = self.context.current_bar.end_time
         date = self.context.date
-        print('receive order %s:' %datetime.datetime.now(),3)
-        # print('order direction:%s offset:%s vol:%d price:%d date:%d time:%s' %
-        #       (order.direction,order.offset,order['vol'],order.limit_price,date,time))
+        # print('receive order %s:' %datetime.datetime.now(),3)
+        print('order:',order.symbol,order.direction,order.offset,order.vol,order.limit_price,date,time)
         self.context.portfolio.modify_position(symbol=order.symbol, direction=order.direction, offset=order.offset,
                                                    vol=order.vol*contract_size, price=order.limit_price,
                                                    marginratio=margin, comm_o=comm_o, comm_t=comm_t, comm_y=comm_y,
-                                                   time=time, date=date, exch_code=exch_code,info=self.context.instmt_info)
-        # if order['direction'] == BUY and order['offset'] == OPEN:
-        #     self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='open',
-        #                                            vol=order['vol']*contract_size, price=order['limit_price'],
-        #                                            marginratio=margin, comm_o=comm_o, comm_t=comm_t, comm_y=comm_y,
-        #                                            time=time, date=date, exch_code=exch_code,info=self.context.instmt_info)
-        #
-        # elif order['direction']  == SELL and order['offset'] == OPEN:
-        #     self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='open',
-        #                                            vol=order['vol'] * contract_size, price=order['limit_price'],
-        #                                            marginratio=margin,
-        #                                            comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,info=self.context.instmt_info)
-        #
-        # elif order['direction']  == BUY and order['offset'] == CLOSE:
-        #     self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close',
-        #                                            vol=order['vol'] * contract_size, price=order['limit_price'],
-        #                                            marginratio=margin,
-        #                                            comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time, date=date, exch_code=exch_code, diff = order['diff'])
-        #
-        # elif order['direction']  == BUY and order['offset'] == CLOSE_T:
-        #     self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close_t',
-        #                                            vol=order['vol'] * contract_size, price=order['limit_price'],
-        #                                            marginratio=margin,
-        #                                            comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,diff = order['diff'])
-        #
-        # elif order['direction']  == BUY and order['offset'] == CLOSE_Y:
-        #     self.context.portfolio.modify_position(symbol=order['symbol'], direction='short', offset='close_y',
-        #                                            vol=order['vol'] * contract_size, price=order['limit_price'],
-        #                                            marginratio=margin,
-        #                                            comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,diff = order['diff'])
-        #
-        # elif order['direction']  == SELL and order['offset'] == CLOSE:
-        #     self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close',
-        #                                            vol=order['vol'] * contract_size, price=order['limit_price'],
-        #                                            marginratio=margin,
-        #                                            comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,diff = order['diff'])
-        #
-        # elif order['direction']  == SELL and order['offset'] == CLOSE_T:
-        #     self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close_t',
-        #                                            vol=order['vol'] * contract_size, price=order['limit_price'],
-        #                                            marginratio=margin,
-        #                                            comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,diff = order['diff'])
-        #
-        # elif order['direction']  == SELL and order['offset'] == CLOSE_Y:
-        #     self.context.portfolio.modify_position(symbol=order['symbol'], direction='long', offset='close_y',
-        #                                            vol=order['vol'] * contract_size, price=order['limit_price'],
-        #                                            marginratio=margin,
-        #                                            comm_o=comm_o, comm_t=comm_t, comm_y=comm_y, time=time,date=date, exch_code=exch_code,diff = order['diff'])
-        # else:
-        #     # 撤单
-        #     pass
+                                                   time=time, date=date, exch_code=exch_code,info=self.context.instmt_info,type=order.type)
         print(
-            'after trade: curtime:%s, curprice:%.2f,total:%d, marginreq:%d, avalcash:%d,upnl:%d,daypnl:%d,daycomm:%d,prebalance:%d' % (
+            'after trade: curtime:%s, curprice:%.2f,total_value:%d, marginreq:%d, availcash:%d,upnl:%d,daypnl:%d,daycomm:%d,prebalance:%d' % (
                 self.context.current_bar.end_time,
                 self.context.current_bar.close,
                 self.context.portfolio.total_value, self.context.portfolio.marginreq,
@@ -313,10 +290,10 @@ class BacktestStrategy(object):
 
     def _handle_dayend(self,event={}):
         self.context.portfolio.dayend_summary(date=self.context.date,
-                                              settlement_price=self.context.settlement_price)
+                                              settlement_price=self.context.current_bar.close)
         # print(self.context.date)
         self.context.portfolio.combine_portfolio_dayend()
-        print(self.context.portfolio.positions)
+        # print(self.context.portfolio.positions)
         # print(self.context.date)
         event = Event(EVENT_NEXT_DAY)
         self._engine.sendEvent(event)

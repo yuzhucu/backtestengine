@@ -135,7 +135,7 @@ class Portfolio(object):
             else:
                 self.positions[symbol].short_t = BasePosition(symbol=symbol, direction=direction, init_vol=vol,
                                                            init_price=price, marginratio=marginratio)
-            print(self.positions[symbol].info)
+            # print(self.positions[symbol].info)
             # print(self.positions[symbol].get_margin_req())
             # print('self.positions[symbol].upnl before update')
             # print(self.positions[symbol].upnl)
